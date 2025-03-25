@@ -1,0 +1,62 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400&family=Inter+Tight:wght@600&display=swap");
+@import "tailwindcss";
+
+:root {
+  --font-manrope: "Manrope", sans-serif;
+  --font-intertight: "Inter Tight", sans-serif;
+}
+
+body {
+  font-family: "Manrope", sans-serif;
+  font-weight: 400;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Inter Tight", sans-serif;
+  font-weight: 600;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("../src/assets/fonts/Inter-Medium.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "InterTight";
+  src: url("../src/assets/fonts/InterTight-SemiBold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Manrope";
+  src: url("../src/assets/fonts/Manrope-Medium.ttf") format("truetype");
+}
+
+@theme {
+  --font-inter: Inter, "sans-serif";
+  --font-intertight: InterTight, "sans-serif";
+  --font-manrope: Manrope, "sans-serif";
+
+  --color-primary: #ff5722;
+  --color-primary-hover: #e64a19;
+  --color-secondary: #001156;
+}
+
+/* Chrome, Safari und Edge */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 8px; /* Höhe der horizontalen Scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: #ff5722; /* Hintergrund der Scrollbar-Spur */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #001156; /* Farbe des Daumens */
+  border-radius: 4px;
+}

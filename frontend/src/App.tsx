@@ -1,15 +1,15 @@
+//utils
 import "./App.css";
+//components
+import LogoSmashSkills from "./components/logo/logo_smashskills";
+import ButtonPrimary from "./components/ui_elements/buttons/button_primary";
+
 
 function App() {
   return (
-    <div className="">
-      <h1 className="">
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Non dignissimos
-        recusandae ex repellendus nesciunt atque libero reprehenderit
-        repudiandae sed maiores nam in deleniti quod sit ea veniam delectus,
-        sequi alias.
-      </h1>
-      <p className="">Test Text</p>
+    <div className="bg-secondary flex gap-20 items-center">
+      <LogoSmashSkills className=""/>
+      <ButtonPrimary title="Primary"/>
     </div>
   );
 }

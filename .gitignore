@@ -1,0 +1,85 @@
+# Byte-compiled / optimierte Dateien
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django spezifische Dateien
+*.log
+*.pot
+*.pyc
+db.sqlite3
+db.sqlite3-journal
+local_settings.py
+
+# Medien- und statische Dateien (optional anpassen, je nach Projektstruktur)
+media
+staticfiles
+
+# Virtuelle Umgebungen
+env/
+venv/
+ENV/
+ENV.bak/
+venv.bak/
+
+# Build-, Distributions- und Egg-Dateien
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer-Logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Test- und Coverage-Berichte
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Übersetzungsdateien
+*.mo
+
+# Sphinx Dokumentation
+docs/_build/
+
+# IDE-spezifische Dateien
+.idea/
+.vscode/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Umgebungsdateien
+.env
+.env.*
+
+# Celery Beat
+celerybeat-schedule
+
+# Node modules (falls verwendet)
+node_modules/
+npm-debug.log*

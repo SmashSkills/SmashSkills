@@ -15,7 +15,7 @@ const ParallaxSlice: React.FC<ParallaxSliceProps> = ({
 }) => {
   return (
     <div
-      className="relative overflow-hidden w-screen -mx-50"
+      className="relative overflow-hidden -mx-50"
       style={{ height }}
     >
       <div

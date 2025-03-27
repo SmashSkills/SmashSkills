@@ -38,8 +38,11 @@ const buttonProps: ButtonConfig = {
 
 const LayoutHeader: React.FC<LayoutHeaderProps> = ({ items }) => {
   return (
-    <div className="flex bg-secondary items-center justify-between py-3 px-20 ">
-      <LogoSmashSkills className="h-10" />
+    <div className="flex bg-secondary items-center justify-between py-3 px-20">
+      <div className="flex items-center justify-center gap-5 text-primary">
+        <LogoSmashSkills className="h-10" />
+        <h1 className="text-4xl">SmashSkills</h1>
+      </div>
       <div className="flex items-center justify-center gap-20">
         <nav className="">
           <LinkNavigation items={items} />

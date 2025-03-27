@@ -17,7 +17,10 @@ const navItems: NavItem[] = [
 function App() {
   return (
     <div>
-      <LayoutHeader items={navItems} />
+      <div className="fixed top-0 left-0 w-full z-40">
+        <LayoutHeader items={navItems} />
+      </div>
+
       <div className="my-20 mx-50">
         <Routes>
           <Route path="/" element={<Home />} />

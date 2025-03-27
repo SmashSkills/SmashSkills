@@ -1,7 +1,7 @@
 import React from "react";
 import ButtonPrimary from "../../components/ui_elements/buttons/button_primary";
 import ButtonSecondary from "../../components/ui_elements/buttons/button_secondary";
-import LogoSmashSkills from "../../components/logo/logo_smashskills";
+import IlluHeroSection from "../../assets/illustrations/illu_herosection.svg";
 
 interface LayoutHeroSectionProps {
   title: string;
@@ -13,7 +13,6 @@ interface LayoutHeroSectionProps {
   classNameSlogan?: string;
   classNameButtonPrimary?: string;
   classNameButtonSecondary?: string;
-  classNameLogo?: string;
 }
 
 const LayoutHeroSection: React.FC<LayoutHeroSectionProps> = ({
@@ -26,17 +25,15 @@ const LayoutHeroSection: React.FC<LayoutHeroSectionProps> = ({
   classNameSlogan,
   classNameButtonSecondary,
   classNameButtonPrimary,
-  classNameLogo,
 }) => {
   return (
     <div
-      className={`flex flex-col items-center justify-center gap-10 
+      className={`flex items-center justify-center gap-10 
       
       ${classNameWrapper}`}
     >
       <div className="flex flex-col items-center justify-center">
-        <div className="flex flex-col items-center justify-center gap-5 mb-5">
-          <LogoSmashSkills className={`${classNameLogo}`} glow />
+        <div className="flex items-center justify-center gap-5 mb-5">
           <h1
             className={`text-9xl 
       
@@ -53,26 +50,26 @@ const LayoutHeroSection: React.FC<LayoutHeroSectionProps> = ({
         >
           {slogan}
         </p>
-      </div>
-
-      <div className="flex gap-5">
-        {buttonSecondaryTitle && (
-          <ButtonSecondary
-            title={buttonSecondaryTitle}
-            className={` 
+        <div className="flex gap-5 mt-20">
+          {buttonSecondaryTitle && (
+            <ButtonSecondary
+              title={buttonSecondaryTitle}
+              className={` 
             
             ${classNameButtonSecondary}`}
-          />
-        )}
-        {buttonPrimaryTitle && (
-          <ButtonPrimary
-            title={buttonPrimaryTitle}
-            className={`  
+            />
+          )}
+          {buttonPrimaryTitle && (
+            <ButtonPrimary
+              title={buttonPrimaryTitle}
+              className={`  
           
           ${classNameButtonPrimary}`}
-          />
-        )}
+            />
+          )}
+        </div>
       </div>
+      <img src={IlluHeroSection} alt="IlluHeroSection" className="" />
     </div>
   );
 };

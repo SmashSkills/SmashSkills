@@ -13,7 +13,7 @@ const ButtonPrimary: React.FC<ButtonPrimaryProps> = ({
   return (
     <button
       type={type}
-      className={`font-inter text-white bg-primary rounded-full px-10 py-2 
+      className={`font-inter text-white bg-primary rounded-full px-8 py-2 
         hover:font-semibold hover:bg-primary-hover 
         transition-colors duration-300
         ${className}`}

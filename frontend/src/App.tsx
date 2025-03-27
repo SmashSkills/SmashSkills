@@ -1,31 +1,28 @@
 //utils
 import "./App.css";
+import { Routes, Route } from "react-router-dom";
+// Pages
+import Home from "./pages/home";
+import About from "./pages/about";
 //components
-import LogoSmashSkills from "./components/logo/logo_smashskills";
-import ButtonPrimary from "./components/ui_elements/buttons/button_primary";
-import ButtonSecondary from "./components/ui_elements/buttons/button_secondary";
-import LayoutHeroSection from "./layouts/page_layouts/hero_section";
+import LayoutHeader, { NavItem } from "./layouts/navigation_layouts/header";
+
+const navItems: NavItem[] = [
+  { label: "Startseite", path: "/" },
+  { label: "Lernfächer", path: "/about" },
+  { label: "Aufgabenpool", path: "/jztu" },
+  { label: "Profil", path: "/aboutfwe" },
+];
 
 function App() {
   return (
     <div>
-      <div className="bg-secondary flex gap-20 items-center p-4">
-        <LogoSmashSkills className="h-10" />
-        <div className="flex gap-5 text-xs">
-          <ButtonSecondary title="Hier einloggen" className="" />
-          <ButtonPrimary title="Jetzt registrieren" className="" />
-        </div>
-      </div>
-      <div className="mt-20">
-        {" "}
-        <LayoutHeroSection
-          title="SmashSkills"
-          slogan="lorem Ipsum mashalla halla fihujwegflkwejhgf"
-          buttonPrimaryTitle="Jetzt registrieren"
-          buttonSecondaryTitle="Hier einloggen"
-          classNameLogo="h-80"
-
-        />
+      <LayoutHeader items={navItems} />
+      <div className="my-20 mx-50">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+        </Routes>
       </div>
     </div>
   );

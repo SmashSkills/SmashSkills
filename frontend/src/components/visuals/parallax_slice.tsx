@@ -10,14 +10,11 @@ export interface ParallaxSliceProps {
 const ParallaxSlice: React.FC<ParallaxSliceProps> = ({
   imageSrc,
   alt = "Parallax image",
-  height = "500px",
+  height = "600px",
   children,
 }) => {
   return (
-    <div
-      className="relative overflow-hidden -mx-50"
-      style={{ height }}
-    >
+    <div className="relative overflow-hidden -mx-50" style={{ height }}>
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{

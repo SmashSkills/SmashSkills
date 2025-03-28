@@ -40,7 +40,7 @@ const ButtonSecondary: React.FC<ButtonSecondaryProps> = ({
     <button
       type={type}
       onClick={onClick}
-      className={`font-inter text-primary border border-primary rounded-full px-8 py-2 
+      className={`font-inter text-primary border border-primary rounded-full px-8 py-2 cursor-pointer 
         hover:font-semibold hover:border-primary-hover hover:text-primary-hover
         transition-colors duration-300
         ${className}`}

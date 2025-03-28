@@ -3,13 +3,14 @@ import "./App.css";
 import { Routes, Route } from "react-router-dom";
 // Pages
 import Home from "./pages/home";
-import About from "./pages/about";
+import About from "./pages/to_use";
 //components
 import LayoutHeader, { NavItem } from "./layouts/navigation_layouts/header";
 
 const navItems: NavItem[] = [
   { label: "Startseite", path: "/" },
-  { label: "Lernfächer", path: "/about" },
+  { label: "Benutzung", path: "/about" },
+  { label: "Lernfächer", path: "/a" },
   { label: "Aufgabenpool", path: "/jztu" },
   { label: "Profil", path: "/aboutfwe" },
 ];

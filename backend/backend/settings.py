@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     
     #Appps
     "user",
+    "curriculum",
 ]
 
 MIDDLEWARE = [

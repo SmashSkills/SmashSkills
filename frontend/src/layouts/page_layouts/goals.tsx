@@ -14,6 +14,7 @@ interface LayoutGoalsProps {
   buttonSecondaryTitle?: string;
   classNameButtonPrimary?: string;
   classNameButtonSecondary?: string;
+  
   classNameImg?: string;
 }
 

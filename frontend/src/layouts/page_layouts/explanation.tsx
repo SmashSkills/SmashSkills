@@ -51,7 +51,7 @@ const LayoutExplanation: React.FC<LayoutExplanationProps> = ({ items }) => {
           <div className="flex items-center">
             <button
               onClick={() => emblaApi && emblaApi.scrollPrev()}
-              className="p-2 rounded-full text-6xl text-black hover:text-primary cursor-pointer focus:outline-none"
+              className="p-2 rounded-full text-6xl text-black hover:text-primary cursor-pointer focus:outline-none transition-all duration-300"
             >
               &#8592;
             </button>
@@ -76,7 +76,7 @@ const LayoutExplanation: React.FC<LayoutExplanationProps> = ({ items }) => {
           <div className="flex items-center">
             <button
               onClick={() => emblaApi && emblaApi.scrollNext()}
-              className="p-2 rounded-full text-6xl text-black hover:text-primary cursor-pointer focus:outline-none"
+              className="p-2 rounded-full text-6xl text-black hover:text-primary cursor-pointer focus:outline-none transition-all duration-300"
             >
               &#8594;
             </button>

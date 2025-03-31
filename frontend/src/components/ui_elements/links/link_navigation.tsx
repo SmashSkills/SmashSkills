@@ -13,7 +13,7 @@ interface LinkNavigationProps {
 
 const LinkNavigation: React.FC<LinkNavigationProps> = ({ items }) => {
   return (
-    <nav className="text-primary ">
+    <nav className="text-white">
       <ul className="flex gap-5">
         {items.map((item, index) => (
           <li key={index}>

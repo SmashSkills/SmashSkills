@@ -32,8 +32,8 @@ const LayoutHeroSection: React.FC<LayoutHeroSectionProps> = ({
     <div
       className={`flex items-center justify-center gap-10 ${classNameWrapper}`}
     >
-      <div className="flex flex-col items-center justify-center">
-        <div className="flex items-center justify-center gap-5 mb-5">
+      <div className="flex flex-col ">
+        <div className="flex  gap-5 mb-5">
           <h1 className={`text-6xl ${classNameTitle}`}>{title}</h1>
         </div>
 

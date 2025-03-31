@@ -1,17 +1,23 @@
+import ButtonPrimary from "../buttons/button_primary";
+
 interface CardSimpleProps {
   title: string;
   text: string;
+  titleButton?: string;
   classNameWrapper?: string;
   classNameTitle?: string;
   classNameText?: string;
+  classNameButton?: string;
 }
 
 const CardSimple: React.FC<CardSimpleProps> = ({
   title,
   text,
+  titleButton,
   classNameWrapper,
   classNameTitle,
   classNameText,
+  classNameButton,
 }) => {
   return (
     <div
@@ -31,6 +37,11 @@ const CardSimple: React.FC<CardSimpleProps> = ({
       >
         {text}
       </p>
+      {titleButton && (
+        <div>
+          <ButtonPrimary title={titleButton} className={classNameButton} />
+        </div>
+      )}
     </div>
   );
 };

@@ -9,10 +9,8 @@ import LayoutHeader, { NavItem } from "./layouts/navigation_layouts/header";
 
 const navItems: NavItem[] = [
   { label: "Startseite", path: "/" },
-  { label: "Benutzung", path: "/about" },
-  { label: "Lernfächer", path: "/a" },
-  { label: "Aufgabenpool", path: "/jztu" },
-  { label: "Profil", path: "/aboutfwe" },
+  { label: "Benutzung", path: "/to-use" },
+  { label: "Lehrpläne", path: "/a" },
 ];
 
 function App() {
@@ -25,7 +23,7 @@ function App() {
       <div className="my-20 mx-50">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/about" element={<ToUse />} />
+          <Route path="/to-use" element={<ToUse />} />
         </Routes>
       </div>
     </div>

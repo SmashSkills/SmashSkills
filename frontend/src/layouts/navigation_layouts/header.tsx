@@ -32,31 +32,30 @@ const buttonProps: ButtonConfig = {
   },
   secondary: {
     title: "Hier einloggen",
-    className: "text-sm",
+    className: "text-sm text-white border-white",
   },
 };
 
 const LayoutHeader: React.FC<LayoutHeaderProps> = ({ items }) => {
   return (
     <div className="flex bg-secondary items-center justify-between py-3 px-20 shadow-md">
-      <div className="flex items-center justify-center gap-5 text-primary">
+      <div className="flex items-center justify-center gap-5 text-white">
         <LogoSmashSkills className="h-10" />
         <h1 className="text-4xl">SmashSkills</h1>
       </div>
-      <div className="flex items-center justify-center gap-20">
-        <nav className="">
-          <LinkNavigation items={items} />
-        </nav>
-        <div className="flex gap-5">
-          <ButtonSecondary
-            title={buttonProps.secondary.title}
-            className={buttonProps.secondary.className}
-          />
-          <ButtonPrimary
-            title={buttonProps.primary.title}
-            className={buttonProps.primary.className}
-          />
-        </div>
+
+      <nav className="">
+        <LinkNavigation items={items} />
+      </nav>
+      <div className="flex gap-5">
+        <ButtonSecondary
+          title={buttonProps.secondary.title}
+          className={buttonProps.secondary.className}
+        />
+        <ButtonPrimary
+          title={buttonProps.primary.title}
+          className={buttonProps.primary.className}
+        />
       </div>
     </div>
   );

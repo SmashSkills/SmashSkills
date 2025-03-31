@@ -40,8 +40,8 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({ items }) => {
   return (
     <div className="flex bg-secondary items-center justify-between py-3 px-20 shadow-md">
       <div className="flex items-center justify-center gap-5 text-white">
-        <LogoSmashSkills className="h-10" />
-        <h1 className="text-4xl">SmashSkills</h1>
+        <LogoSmashSkills className="h-8" />
+        <h1 className="text-2xl">SmashSkills</h1>
       </div>
 
       <nav className="">

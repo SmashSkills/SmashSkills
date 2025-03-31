@@ -3,7 +3,7 @@ import "./App.css";
 import { Routes, Route } from "react-router-dom";
 // Pages
 import Home from "./pages/home";
-import About from "./pages/to_use";
+import ToUse from "./pages/to_use";
 //components
 import LayoutHeader, { NavItem } from "./layouts/navigation_layouts/header";
 
@@ -25,7 +25,7 @@ function App() {
       <div className="my-20 mx-50">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
+          <Route path="/about" element={<ToUse />} />
         </Routes>
       </div>
     </div>

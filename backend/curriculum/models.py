@@ -20,7 +20,7 @@ class Fach(models.Model):
     klassenstufe = models.ForeignKey(Klassenstufe, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.fach_titel
+        return f"{self.klassenstufe} - {self.fach_titel}"
     
 class Lernfeld(models.Model):
     lernfeld = models.CharField(max_length=100)
@@ -28,14 +28,14 @@ class Lernfeld(models.Model):
     fach_id = models.ForeignKey(Fach, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.lernfeld
+        return f"Klassenstufe: {self.fach_id.klassenstufe} – Fach: {self.fach_id.fach_titel} – Lernfeld: {self.lernfeld}"
 
 class Lernziele(models.Model):
     lernziel = models.CharField(max_length=100)
     lernfeld_id = models.ForeignKey(Lernfeld, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.lernziel
+        return f"Klassenstufe: {self.lernfeld_id.fach_id.klassenstufe} – Lernfeld: {self.lernfeld_id.lernfeld} – Lernziel: {self.lernziel}"
     
 class Lernziele_Beschreibung(models.Model):
     lernziel_beschreibung = models.TextField()
@@ -49,7 +49,7 @@ class Teilziele(models.Model):
     lernziele_id = models.ForeignKey(Lernziele, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.teilziel
+        return f"Teilziel-ID: {self.id} – Teilziel: {self.teilziel}"
     
 class Teilziele_Beschreibung(models.Model):
     teilziel_beschreibung = models.TextField()
@@ -63,7 +63,7 @@ class Lerninhalt(models.Model):
     teilziel_id = models.ForeignKey(Teilziele, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.lerninhalt
+        return f"Lerninhalt-ID: {self.id} – Lerninhalt: {self.lerninhalt}" 
     
 class Lerninhalt_Beschreibung(models.Model):
     lerninhalt_beschreibung = models.TextField()

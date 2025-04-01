@@ -7,7 +7,7 @@ import LayoutCurriculumHighlights from "../layouts/page_layouts/curriculum_highl
 const Home: React.FC = () => {
   return (
     <div className="flex flex-col">
-      <div className=" flex items-center justify-center py-20">
+      <div className=" flex items-center justify-center">
         <LayoutHeroSection
           title="Wieso SmashSkills?"
           slogan="SmashSkills vereinfacht die Unterrichtsplanung, automatisiert wiederkehrende Aufgaben und stellt geprüfte Inhalte direkt zur Verfügung. So bleibt mehr Zeit für das, was wirklich zählt!"

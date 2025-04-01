@@ -39,7 +39,7 @@ const items: CardData[] = [
 
 const ToUse: React.FC = () => {
   return (
-    <div className="py-20">
+    <div className="">
       <LayoutExplanation items={items} />
 
       <div className="flex flex-col items-center justify-center gap-20 pt-20">

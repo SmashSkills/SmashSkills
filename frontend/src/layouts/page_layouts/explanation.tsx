@@ -31,15 +31,6 @@ const LayoutExplanation: React.FC<LayoutExplanationProps> = ({ items }) => {
     emblaApi.scrollTo(1);
     onScroll();
   }, [emblaApi, onScroll]);
-  useEffect(() => {
-    if (!emblaApi) return;
-
-    const interval = setInterval(() => {
-      emblaApi.scrollNext();
-    }, 10000); // 30.000 ms = 30 Sekunden
-
-    return () => clearInterval(interval); // cleanup beim Unmount
-  }, [emblaApi]);
 
   return (
     <div className="flex flex-col items-center justify-center">
@@ -66,7 +57,7 @@ const LayoutExplanation: React.FC<LayoutExplanationProps> = ({ items }) => {
                   <CardSimple
                     title={item.title}
                     text={item.text}
-                    classNameWrapper="shadow-md"
+                    classNameWrapper="shadow-md hover:border-primary cursor-move"
                     classNameTitle="text-2xl"
                   />
                 </div>

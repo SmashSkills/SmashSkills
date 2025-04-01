@@ -1,15 +1,97 @@
 <!DOCTYPE html>
 <html lang="de">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Lerninhalt anlegen</title>
-</head>
-<body>
-    <h2>Neuen Lerninhalt anlegen</h2>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <style>
+      :root {
+        --color-primary: #ff5722;
+        --color-secondary: #001156;
+      }
+
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background-color: #f4f4f8;
+        margin: 0;
+        padding: 2rem;
+        display: flex;
+        justify-content: center;
+      }
+
+      .form-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 1rem;
+        max-width: 500px;
+        width: 100%;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        border-left: 10px solid var(--color-secondary);
+      }
+
+      h2 {
+        color: var(--color-secondary);
+        margin-top: 0;
+      }
+
+      form p {
+        margin-bottom: 1rem;
+      }
+
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 0.6rem;
+        border: 1px solid #ccc;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        box-sizing: border-box;
+      }
+
+      button {
+        background-color: var(--color-primary);
+        color: white;
+        padding: 0.7rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.3s ease;
+      }
+
+      button:hover {
+        background-color: #e64a19;
+      }
+
+      .success-message {
+        color: green;
+        margin-top: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="form-container">
+      <h2>Neuen Lerninhalt anlegen</h2>
+      <form method="post" id="lernForm">
+        {% csrf_token %} {{ form.as_p }}
         <button type="submit">Speichern</button>
-    </form>
-</body>
+      </form>
+      {% if messages %} {% for message in messages %}
+      <div class="success-message">{{ message }}</div>
+      {% endfor %} {% endif %}
+    </div>
+
+    <script>
+      // Formular nach dem Absenden zurücksetzen
+      document
+        .getElementById("lernForm")
+        .addEventListener("submit", function () {
+          setTimeout(function () {
+            document.getElementById("lernForm").reset();
+          }, 100); // kurze Verzögerung damit der Submit durchkommt
+        });
+    </script>
+  </body>
 </html>

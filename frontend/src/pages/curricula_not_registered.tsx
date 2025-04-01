@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import ButtonFilterDropdown from "../components/ui_elements/buttons/button_filter_dropdown";
 import CardCurriculumShowcase from "../components/ui_elements/cards/card_curriculum_showcase";
 import { FaClock, FaMapMarkerAlt, FaUserGraduate } from "react-icons/fa";
+
 const CurriculaNotRegistered: React.FC = () => {
   const labelMap = {
     subject: "Lernfach",
@@ -112,18 +113,47 @@ const CurriculaNotRegistered: React.FC = () => {
     });
 
   const studySubject = [
-    "Mathe",
+    "Mathematik",
     "Deutsch",
     "Englisch",
-    "Geographie",
-    "Politische Bildung",
+    "Geografie",
+    "Politik",
+    "Physik",
+    "Chemie",
+    "Biologie",
+    "Geschichte",
+    "Erdkunde",
+    "Kunst",
+    "Musik",
+    "Informatik",
+    "Sport",
+    "Philosophie",
+    "Literatur",
+    "Wirtschaft",
+    "Psychologie",
+    "Religion",
+    "Sozialkunde",
+    "Technik",
+    "Medien",
   ];
+
   const federalState = [
     "Sachsen",
-    "Berlin/Brandenburg",
+    "Berlin",
     "Hamburg",
     "Nordrhein-Westfalen",
     "Bayern",
+    "Hessen",
+    "Rheinland-Pfalz",
+    "Schleswig-Holstein",
+    "Sachsen-Anhalt",
+    "Thüringen",
+    "Bremen",
+    "Baden-Württemberg",
+    "Mecklenburg-Vorpommern",
+    "Saarland",
+    "Niedersachsen",
+    "Brandenburg",
   ];
   const gradeLevel = [
     "Klassenstufe 1-2",
@@ -145,6 +175,19 @@ const CurriculaNotRegistered: React.FC = () => {
   const [selectedGradeLevel, setSelectedGradeLevel] = useState<
     string | undefined
   >(undefined);
+  const filteredCurricula = curricula.filter((item) => {
+    const matchesSubject =
+      !selectedStudySubject ||
+      item.subject.toLowerCase() === selectedStudySubject.toLowerCase();
+    const matchesState =
+      !selectedFederalState ||
+      item.state.toLowerCase() === selectedFederalState.toLowerCase();
+    const matchesGrade =
+      !selectedGradeLevel ||
+      item.grade === selectedGradeLevel.replace("Klassenstufe ", "");
+
+    return matchesSubject && matchesState && matchesGrade;
+  });
 
   return (
     <div className="flex flex-col">
@@ -181,11 +224,8 @@ const CurriculaNotRegistered: React.FC = () => {
               placeholder="Klassenstufe wählen"
             />
           </div>
-          <div className="flex border rounded-md items-center justify-center">
-            <h1>Suchfeld</h1>
-          </div>
           <div className="flex flex-col gap-4">
-            {curricula.map(({ id, title, ...rest }) => (
+            {filteredCurricula.map(({ id, title, ...rest }) => (
               <CardCurriculumShowcase
                 key={id}
                 title={title}

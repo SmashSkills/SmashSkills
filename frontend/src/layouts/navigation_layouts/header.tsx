@@ -30,6 +30,7 @@ const buttonProps: ButtonConfig = {
     title: "Jetzt registrieren",
     className: "text-sm",
   },
+  
   secondary: {
     title: "Hier einloggen",
     className: "text-sm text-white border-white",
@@ -38,16 +39,17 @@ const buttonProps: ButtonConfig = {
 
 const LayoutHeader: React.FC<LayoutHeaderProps> = ({ items }) => {
   return (
-    <div className="flex bg-secondary items-center justify-between py-3 px-20 shadow-md">
-      <div className="flex items-center justify-center gap-5 text-white">
+    <div className="grid grid-cols-3 items-center py-3 px-6 md:px-20 bg-secondary shadow-md">
+      <div className="flex items-center gap-4 text-white">
         <LogoSmashSkills className="h-8" />
         <h1 className="text-2xl">SmashSkills</h1>
       </div>
 
-      <nav className="">
+      <nav className="flex justify-center">
         <LinkNavigation items={items} />
       </nav>
-      <div className="flex gap-5">
+
+      <div className="flex justify-end gap-4">
         <ButtonSecondary
           title={buttonProps.secondary.title}
           className={buttonProps.secondary.className}

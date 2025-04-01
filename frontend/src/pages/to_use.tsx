@@ -43,7 +43,7 @@ const ToUse: React.FC = () => {
       <LayoutExplanation items={items} />
 
       <div className="flex flex-col items-center justify-center gap-20 pt-20">
-        <div className="flex flex-col items-center justify-center gap-5">
+        <div className="flex flex-col items-center justify-center gap-5 w-200">
           <h1 className="text-6xl">Lehrpläne durchsuchen</h1>
           <p className="text-gray-500 text-center">
             Finde den passenden Lehrplan für dein Bundesland – schnell,

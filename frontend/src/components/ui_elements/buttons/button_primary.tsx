@@ -42,7 +42,7 @@ const ButtonPrimary: React.FC<ButtonPrimaryProps> = ({
     <button
       type={type}
       onClick={onClick}
-      className={`font-inter text-white bg-primary rounded-full px-8 py-2 cursor-pointer 
+      className={`font-inter text-white bg-primary rounded-lg px-8 py-2 cursor-pointer 
         hover:font-semibold hover:bg-primary-hover 
         transition-colors duration-300
         ${className}`}

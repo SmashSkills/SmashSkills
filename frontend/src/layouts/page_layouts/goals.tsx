@@ -31,9 +31,12 @@ const LayoutGoals: React.FC<LayoutGoalsProps> = ({
       <div className="flex gap-100">
         <div className="flex flex-col gap-10">
           <h1 className="text-6xl">{title}</h1>
-          <div className="flex flex-col text-gray-500 text-xl">
+          <div className="flex flex-col text-gray-500 text-xl gap-1">
             {points.map((point, index) => (
-              <p className="before:content-['•'] before:mr-2" key={index}>
+              <p
+                className="before:content-['•'] before:mr-2 before:text-primary before:text-2xl"
+                key={index}
+              >
                 {point.text}
               </p>
             ))}

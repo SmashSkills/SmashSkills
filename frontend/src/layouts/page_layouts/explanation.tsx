@@ -31,13 +31,12 @@ const LayoutExplanation: React.FC<LayoutExplanationProps> = ({ items }) => {
   useEffect(() => {
     if (!emblaApi) return;
     emblaApi.on("scroll", onScroll);
-    emblaApi.scrollTo(1);
+    emblaApi.scrollTo(0); // Start at the first card
     onScroll();
   }, [emblaApi, onScroll]);
 
   return (
-    <div className="flex flex-col items-center justify-center ">
-                  <ButtonSlider />
+    <div className="flex flex-col items-center justify-center">
       <div className="flex flex-col gap-5 w-full">
         <div className="flex flex-col items-center">
           <TagSingleStringInfo
@@ -54,19 +53,13 @@ const LayoutExplanation: React.FC<LayoutExplanationProps> = ({ items }) => {
           </p>
         </div>
 
-        <div className="flex items-center ">
-          <div className="flex items-center ">
+        <div className="flex items-center">
+          <ButtonSlider onClick={() => emblaApi && emblaApi.scrollNext()} classNameWrapper="rotate-180" />
 
-            <button
-              onClick={() => emblaApi && emblaApi.scrollPrev()}
-              className="p-2 rounded-full text-6xl text-black hover:text-primary cursor-pointer focus:outline-none transition-all duration-300"
-            >
-              &#8592;
-            </button>
-          </div>
-          <div className="flex-1 overflow-hidden " ref={emblaRef}>
-            <div className="flex ">
-              {items.map((item) => (
+
+          <div className="flex-1 overflow-hidden" ref={emblaRef}>
+            <div className="flex">
+              {items.map((item, index) => (
                 <div
                   key={item.id}
                   className="px-5 py-10 flex-shrink-0 w-full h-[300px]"
@@ -79,7 +72,7 @@ const LayoutExplanation: React.FC<LayoutExplanationProps> = ({ items }) => {
                           {item.title}
                         </span>
                         <TagSingleStringInfo
-                          text={`Schritt ${item.id}/${items.length}`}
+                          text={`Schritt ${index + 1}/${items.length}`}
                           classNameWrapper="bg-secondary"
                           classNameText="text-white"
                         />
@@ -92,14 +85,7 @@ const LayoutExplanation: React.FC<LayoutExplanationProps> = ({ items }) => {
               ))}
             </div>
           </div>
-          <div className="flex items-center">
-            <button
-              onClick={() => emblaApi && emblaApi.scrollNext()}
-              className="p-2 rounded-full text-6xl text-black hover:text-primary cursor-pointer focus:outline-none transition-all duration-300"
-            >
-              &#8594;
-            </button>
-          </div>
+          <ButtonSlider onClick={() => emblaApi && emblaApi.scrollPrev()} />
         </div>
         <div className="w-full h-1 bg-gray-300 relative mt-4">
           <div
@@ -117,3 +103,4 @@ const LayoutExplanation: React.FC<LayoutExplanationProps> = ({ items }) => {
 
 export default LayoutExplanation;
 
+/******  fdcac408-a793-4af1-a0e9-e533e77f6be3  *******/

@@ -5,6 +5,7 @@ import ButtonPrimary from "../components/ui_elements/buttons/button_primary";
 import CardSimple from "../components/ui_elements/cards/card_simple";
 import TagSingleStringInfo from "../components/ui_elements/tags/tag_single_string_info";
 import LayoutBannerLowerHook from "../layouts/banner/lower_hook_banner";
+import BackgroundCurvedTransition from "../components/visuals/background_curved_transition";
 //Assets
 import { FaGraduationCap } from "react-icons/fa";
 import { AiOutlineFolderAdd } from "react-icons/ai";
@@ -58,7 +59,7 @@ const ToUse: React.FC = () => {
       <div className="pb-20 px-50">
         <LayoutExplanation items={items} />
       </div>
-
+      <BackgroundCurvedTransition textColorClassName="text-background-dark-white" />
       <div className="flex bg-background-dark-white flex-col items-center justify-center gap-20 py-20">
         <div className="flex flex-col items-center px-50">
           <div className="w-200 text-center mb-20">

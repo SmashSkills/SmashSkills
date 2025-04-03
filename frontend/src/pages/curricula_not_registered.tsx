@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import ButtonFilterDropdown from "../components/ui_elements/buttons/button_filter_dropdown";
 import CardCurriculumShowcase from "../components/ui_elements/cards/card_curriculum_showcase";
+import BackgroundCurvedTransition from "../components/visuals/background_curved_transition";
 import { FaClock, FaMapMarkerAlt, FaUserGraduate } from "react-icons/fa";
 
 const CurriculaNotRegistered: React.FC = () => {
@@ -108,7 +109,7 @@ const CurriculaNotRegistered: React.FC = () => {
       return {
         label: labelMap[key],
         content: curriculum[key],
-        icon: <Icon />,
+        icon: <Icon className="text-primary" />,
       };
     });
 
@@ -191,8 +192,8 @@ const CurriculaNotRegistered: React.FC = () => {
 
   return (
     <div className="flex flex-col">
-      <div className="flex flex-col gap-5 items-center justify-center">
-        <h1 className="text-6xl">Lehrpläne durchsuchen</h1>
+      <div className="flex flex-col gap-5 items-center justify-center px-50 pb-10">
+        <h1 className="text-6xl text-secondary">Lehrpläne durchsuchen</h1>
         <p className="text-gray-500 text-center">
           Finde den passenden Lehrplan nach Fach, Bundesland oder Klassenstufe –
           ganz einfach filterbar und übersichtlich aufbereitet. So gelangst du
@@ -202,9 +203,11 @@ const CurriculaNotRegistered: React.FC = () => {
           einen Blick.
         </p>
       </div>
-      <div className="flex flex-col items-center justify-center py-20 gap-10">
+      <BackgroundCurvedTransition textColorClassName="text-background-dark-white" />
+
+      <div className="flex flex-col items-center justify-center py-10 pb-10 gap-10 bg-background-dark-white">
         <div className="flex flex-col gap-5 w-1/2">
-          <div className="flex gap-10 justify-center">
+          <div className="flex justify-between gap-6 w-full">
             <ButtonFilterDropdown<string>
               options={studySubject}
               selected={selectedStudySubject}
@@ -224,13 +227,14 @@ const CurriculaNotRegistered: React.FC = () => {
               placeholder="Klassenstufe wählen"
             />
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 ">
             {filteredCurricula.map(({ id, title, ...rest }) => (
               <CardCurriculumShowcase
                 key={id}
                 title={title}
                 items={toDetails({ id, title, ...rest })}
                 buttonTitle="Lehrplan ansehen"
+                className="bg-white"
               />
             ))}
           </div>

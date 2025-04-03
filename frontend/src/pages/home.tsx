@@ -5,6 +5,7 @@ import LayoutGoals from "../layouts/page_layouts/goals";
 import IlluParallax from "../assets/illustrations/illu_parallax.svg";
 import LayoutCurriculumHighlights from "../layouts/page_layouts/curriculum_highlights";
 import LayoutBannerLowerHook from "../layouts/banner/lower_hook_banner";
+import BackgroundCurvedTransition from "../components/visuals/background_curved_transition";
 import { TiFlashOutline } from "react-icons/ti";
 import { CiClock2 } from "react-icons/ci";
 import { FiUsers } from "react-icons/fi";

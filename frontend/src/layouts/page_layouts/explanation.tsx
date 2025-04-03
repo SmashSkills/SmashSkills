@@ -45,7 +45,7 @@ const LayoutExplanation: React.FC<LayoutExplanationProps> = ({ items }) => {
           />
           <h1 className="flex items-center justify-center text-6xl text-secondary text-center mb-5">
             Wie benutzt du&nbsp;
-            <span className="text-primary">SmashSkills?</span>
+            <span className="text-secondary">SmashSkills?</span>
           </h1>
           <p className="text-xl text-center text-gray-500">
             Entdecke, wie du mit SmashSkills deinen Unterricht effizienter

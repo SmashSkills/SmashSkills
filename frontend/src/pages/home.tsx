@@ -4,6 +4,7 @@ import ParallaxSlice from "../components/visuals/parallax_slice";
 import LayoutGoals from "../layouts/page_layouts/goals";
 import IlluParallax from "../assets/illustrations/illu_parallax.svg";
 import LayoutCurriculumHighlights from "../layouts/page_layouts/curriculum_highlights";
+import LayoutBannerLowerHook from "../layouts/banner/lower_hook_banner";
 import { TiFlashOutline } from "react-icons/ti";
 import { CiClock2 } from "react-icons/ci";
 import { FiUsers } from "react-icons/fi";
@@ -18,7 +19,7 @@ const Home: React.FC = () => {
 
   const cardItems = [
     {
-      icon: <TiFlashOutline size={24} className="text-primary" />, 
+      icon: <TiFlashOutline size={24} className="text-primary" />,
       title: "Effiziente Aufgabenverwaltung",
       text: "Durch das modulare Baukastenprinzip lassen sich Aufgaben schnell und flexibel strukturieren.",
     },
@@ -76,6 +77,14 @@ const Home: React.FC = () => {
       </div>
       <div className="py-20 px-50">
         <LayoutCurriculumHighlights title="Offizielle Lehrpläne" />
+      </div>
+      <div className="relative flex py-20 px-50 bg-secondary justify-center Z-10">
+        <LayoutBannerLowerHook
+          title="Der nächste Schritt zu stressfreiem Unterrichten."
+          text="Mit SmashSkills sparst du Zeit, steigerst die Effizienz deines Unterrichts und hast immer lehrplankonforme Inhalte zur Hand. Nutze digitale Werkzeuge, um deine Klasse bestmöglich zu fördern, und erlebe, wie einfach Unterrichtsvorbereitung sein kann."
+          buttonTitle="Jetzt registrieren und loslegen"
+          classNameWrapper="flex flex-col items-center text-center"
+        />
       </div>
       {/**Background */}
     </div>

@@ -7,7 +7,10 @@ interface ButtonSliderProps {
   classNameWrapper?: string;
 }
 
-const ButtonSlider: React.FC<ButtonSliderProps> = ({ onClick, classNameWrapper }) => {
+const ButtonSlider: React.FC<ButtonSliderProps> = ({
+  onClick,
+  classNameWrapper,
+}) => {
   return (
     <motion.button
       whileHover={{ backgroundColor: "rgba(255, 87, 34, 0.2)", scale: 1.2 }}
@@ -21,4 +24,3 @@ const ButtonSlider: React.FC<ButtonSliderProps> = ({ onClick, classNameWrapper }
 };
 
 export default ButtonSlider;
-

@@ -54,8 +54,10 @@ const LayoutExplanation: React.FC<LayoutExplanationProps> = ({ items }) => {
         </div>
 
         <div className="flex items-center">
-          <ButtonSlider onClick={() => emblaApi && emblaApi.scrollNext()} classNameWrapper="rotate-180" />
-
+          <ButtonSlider
+            onClick={() => emblaApi && emblaApi.scrollPrev()}
+            classNameWrapper="rotate-180"
+          />
 
           <div className="flex-1 overflow-hidden" ref={emblaRef}>
             <div className="flex">
@@ -85,11 +87,14 @@ const LayoutExplanation: React.FC<LayoutExplanationProps> = ({ items }) => {
               ))}
             </div>
           </div>
-          <ButtonSlider onClick={() => emblaApi && emblaApi.scrollPrev()} />
+          <ButtonSlider
+            onClick={() => emblaApi && emblaApi.scrollNext()}
+            classNameWrapper=""
+          />
         </div>
         <div className="w-full h-1 bg-gray-300 relative mt-4">
           <div
-            className="h-full bg-red-500 transition-transform duration-200"
+            className="h-full bg-primary transition-transform duration-200"
             style={{
               transform: `scaleX(${progress})`,
               transformOrigin: "left",
@@ -103,4 +108,4 @@ const LayoutExplanation: React.FC<LayoutExplanationProps> = ({ items }) => {
 
 export default LayoutExplanation;
 
-/******  fdcac408-a793-4af1-a0e9-e533e77f6be3  *******/
+/******  38b4490f-b087-449c-854e-beb802b24662  *******/

@@ -13,7 +13,7 @@ const TagSingleStringInfo: React.FC<TagSingleStringInfoProps> = ({
 }) => {
   return (
     <div
-      className={`flex w-max items-center rounded-full bg-orange-light px-2 py-[0.5px]
+      className={`flex w-max items-center rounded-full bg-orange-light px-3 py-[0.5px]
     ${classNameWrapper}`}
     >
       <p

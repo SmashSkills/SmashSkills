@@ -1,7 +1,8 @@
+import React, { ReactNode } from "react";
 import ButtonPrimary from "../buttons/button_primary";
 
 interface CardSimpleProps {
-  title: string;
+  title: string | ReactNode;
   text: string;
   icon?: any;
   titleButton?: string;

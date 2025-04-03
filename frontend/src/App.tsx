@@ -14,15 +14,12 @@ const navItems: NavItem[] = [
   { label: "Lehrpläne", path: "/curricula-not-registered" },
 ];
 
-
-
 function App() {
   return (
     <div className="h-full">
       <header className="fixed top-0 left-0 w-full z-40">
         <LayoutHeader items={navItems} />
       </header>
-
       <main className="py-40">
         <Routes>
           <Route path="/" element={<Home />} />

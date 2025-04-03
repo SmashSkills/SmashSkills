@@ -14,7 +14,7 @@ const ParallaxSlice: React.FC<ParallaxSliceProps> = ({
   children,
 }) => {
   return (
-    <div className="relative overflow-hidden -mx-50" style={{ height }}>
+    <div className="relative overflow-hidden bg-white" style={{ height }}>
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
@@ -23,7 +23,7 @@ const ParallaxSlice: React.FC<ParallaxSliceProps> = ({
         }}
         aria-label={alt}
       />
-      <div className="relative z-10">{children}</div>
+      <div className="relative">{children}</div>
     </div>
   );
 };

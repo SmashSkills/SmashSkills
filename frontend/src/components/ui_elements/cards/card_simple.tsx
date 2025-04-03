@@ -3,6 +3,7 @@ import ButtonPrimary from "../buttons/button_primary";
 interface CardSimpleProps {
   title: string;
   text: string;
+  icon?: any;
   titleButton?: string;
   classNameWrapper?: string;
   classNameTitle?: string;
@@ -13,6 +14,7 @@ interface CardSimpleProps {
 const CardSimple: React.FC<CardSimpleProps> = ({
   title,
   text,
+  icon = [],
   titleButton,
   classNameWrapper,
   classNameTitle,
@@ -21,9 +23,13 @@ const CardSimple: React.FC<CardSimpleProps> = ({
 }) => {
   return (
     <div
-      className={`flex flex-col h-full w-full border border-gray-300 rounded-md p-5 gap-2   
+      className={`flex flex-col h-full w-full rounded-md p-5 gap-2    
     ${classNameWrapper}`}
     >
+      <div className="inline-flex items-center justify-center bg-orange-light rounded-md p-2 w-fit h-fit">
+        {icon}
+      </div>
+
       <h1
         className={`
         ${classNameTitle}`}

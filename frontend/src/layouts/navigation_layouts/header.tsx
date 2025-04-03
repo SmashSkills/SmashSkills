@@ -33,7 +33,7 @@ const buttonProps: ButtonConfig = {
   
   secondary: {
     title: "Hier einloggen",
-    className: "text-sm text-white border-white",
+    className: "text-sm text-white border-0",
   },
 };
 
@@ -42,7 +42,7 @@ const LayoutHeader: React.FC<LayoutHeaderProps> = ({ items }) => {
     <div className="grid grid-cols-3 items-center py-3 px-6 md:px-20 bg-secondary shadow-md">
       <div className="flex items-center gap-4 text-white">
         <LogoSmashSkills className="h-8" />
-        <h1 className="text-2xl">SmashSkills</h1>
+        <h1 className="text-2xl"><span className="text-primary">Smash</span>Skills</h1>
       </div>
 
       <nav className="flex justify-center">

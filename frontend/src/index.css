@@ -44,6 +44,8 @@ h6 {
   --color-primary: #ff5722;
   --color-primary-hover: #e64a19;
   --color-secondary: #001156;
+  --color-orange-light: #feede7;
+  --color-background-dark-white: #f9fafb;
 }
 
 /* Chrome, Safari und Edge */

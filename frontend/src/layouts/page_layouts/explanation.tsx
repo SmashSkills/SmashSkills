@@ -31,7 +31,7 @@ const LayoutExplanation: React.FC<LayoutExplanationProps> = ({ items }) => {
   useEffect(() => {
     if (!emblaApi) return;
     emblaApi.on("scroll", onScroll);
-    emblaApi.scrollTo(0); // Start at the first card
+    emblaApi.scrollTo(0);
     onScroll();
   }, [emblaApi, onScroll]);
 

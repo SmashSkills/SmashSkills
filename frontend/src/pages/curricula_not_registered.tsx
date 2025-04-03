@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import ButtonFilterDropdown from "../components/ui_elements/buttons/button_filter_dropdown";
 import CardCurriculumShowcase from "../components/ui_elements/cards/card_curriculum_showcase";
 import BackgroundCurvedTransition from "../components/visuals/background_curved_transition";
+import LayoutBannerLowerHook from "../layouts/banner/lower_hook_banner";
 import { FaClock, FaMapMarkerAlt, FaUserGraduate } from "react-icons/fa";
 
 const CurriculaNotRegistered: React.FC = () => {
@@ -239,6 +240,14 @@ const CurriculaNotRegistered: React.FC = () => {
             ))}
           </div>
         </div>
+      </div>
+      <div className="relative flex py-20 px-50 bg-secondary justify-center Z-10">
+        <LayoutBannerLowerHook
+          title="Erstelle passende Arbeitsblätter zu deinem Lehrplan"
+          text="Mit unserem Arbeitsblatt-Generator kannst du schnell und einfach Unterrichtsmaterialien erstellen, die perfekt zu deinem Lehrplan passen."
+          buttonTitle="Jetzt zum Arbeitsblatt-Generator"
+          classNameWrapper="flex flex-col items-center text-center"
+        />
       </div>
     </div>
   );

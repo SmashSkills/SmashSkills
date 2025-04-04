@@ -35,7 +35,7 @@ const LayoutCurriculumHighlights: React.FC<LayoutCurriculumHighlightsProps> = ({
   title,
 }) => {
   return (
-    <div className="flex flex-col items-center justify-center gap-10 ">
+    <div className="flex flex-col items-center justify-center gap-10">
       <div className="flex flex-col items-center gap-3">
         <TagSingleStringInfo text="Bundesweit verfügbar" />
         <div className="flex flex-col gap-5">
@@ -57,14 +57,14 @@ const LayoutCurriculumHighlights: React.FC<LayoutCurriculumHighlightsProps> = ({
           className="z-10 items-center"
         />
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-6xl">
+      <div className=" grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-6xl">
         {cardItems.map((item, index) => (
           <CardSimple
             key={index}
             icon={item.icon}
             title={item.title}
             text={item.text}
-            classNameWrapper="items-center shadow-md"
+            classNameWrapper="items-center shadow-md relative z-10"
             classNameText="text-center"
             classNameTitle="text-lg text-secondary"
           />

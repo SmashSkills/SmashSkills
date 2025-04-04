@@ -1,74 +1,63 @@
 from django.db import models
 
-# Create your models here.
-
-
-class Bundesland(models.Model):
+class Lehrplan(models.Model):
+    klassenstufen = models.CharField(
+        max_length=100,
+        help_text="Mehrere Klassenstufen durch Komma trennen, z. B. '3, 4, 5a'"
+    )
     bundesland = models.CharField(max_length=100)
+    fach = models.CharField(max_length=100)
 
     def __str__(self):
-        return self.bundesland
-    
-class Klassenstufe(models.Model):
-    klassenstufe = models.CharField(max_length=100)
-    def __str__(self):
-        return self.klassenstufe
+        return f"{self.fach} (Klasse {self.klassenstufen}, {self.bundesland})"
 
-class Fach(models.Model):
-    fach_titel = models.CharField(max_length=100)
-    bundesland = models.ForeignKey(Bundesland, on_delete=models.CASCADE)
-    klassenstufe = models.ForeignKey(Klassenstufe, on_delete=models.CASCADE)
+class Lernbereich(models.Model):
+    lehrplan = models.ForeignKey(Lehrplan, related_name="lernbereiche", on_delete=models.CASCADE)
+    nummer = models.PositiveIntegerField()
+    name = models.CharField(max_length=255)
+    unterrichtsstunden = models.PositiveIntegerField()
 
     def __str__(self):
-        return f"{self.klassenstufe} - {self.fach_titel}"
-    
-class Lernfeld(models.Model):
-    lernfeld = models.CharField(max_length=100)
-    unterrichtseinheiten = models.IntegerField() #Parameter für positive Zahlen
-    fach_id = models.ForeignKey(Fach, on_delete=models.CASCADE)
+        return f"{self.name} (#{self.nummer})"
+
+class Lernziel(models.Model):
+    lernbereich = models.ForeignKey(Lernbereich, related_name="lernziele", on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
 
     def __str__(self):
-        return f"Klassenstufe: {self.fach_id.klassenstufe} – Fach: {self.fach_id.fach_titel} – Lernfeld: {self.lernfeld}"
+        return self.name
 
-class Lernziele(models.Model):
-    lernziel = models.CharField(max_length=100)
-    lernfeld_id = models.ForeignKey(Lernfeld, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"Klassenstufe: {self.lernfeld_id.fach_id.klassenstufe} – Lernfeld: {self.lernfeld_id.lernfeld} – Lernziel: {self.lernziel}"
-    
-class Lernziele_Beschreibung(models.Model):
-    lernziel_beschreibung = models.TextField()
-    lernziel_id = models.ForeignKey(Lernziele, on_delete=models.CASCADE)
+class LernzielBeschreibung(models.Model):
+    lernziel = models.ForeignKey(Lernziel, related_name="beschreibungen", on_delete=models.CASCADE)
+    text = models.TextField()
 
     def __str__(self):
-        return self.lernziel_beschreibung
-    
-class Teilziele(models.Model):
-    teilziel = models.CharField(max_length=100)
-    lernziele_id = models.ForeignKey(Lernziele, on_delete=models.CASCADE)
+        return self.text[:50]
+
+class Teilziel(models.Model):
+    lernziel = models.ForeignKey(Lernziel, related_name="teilziele", on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
 
     def __str__(self):
-        return f"Teilziel-ID: {self.id} – Teilziel: {self.teilziel}"
-    
-class Teilziele_Beschreibung(models.Model):
-    teilziel_beschreibung = models.TextField()
-    teilziel_id = models.ForeignKey(Teilziele, on_delete=models.CASCADE)
+        return self.name
+
+class TeilzielBeschreibung(models.Model):
+    teilziel = models.ForeignKey(Teilziel, related_name="beschreibungen", on_delete=models.CASCADE)
+    text = models.TextField()
 
     def __str__(self):
-        return self.teilziel_beschreibung
-    
+        return self.text[:50]
+
 class Lerninhalt(models.Model):
-    lerninhalt = models.CharField(max_length=100)
-    teilziel_id = models.ForeignKey(Teilziele, on_delete=models.CASCADE)
+    teilziel = models.ForeignKey(Teilziel, related_name="lerninhalte", on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
 
     def __str__(self):
-        return f"Lerninhalt-ID: {self.id} – Lerninhalt: {self.lerninhalt}" 
-    
-class Lerninhalt_Beschreibung(models.Model):
-    lerninhalt_beschreibung = models.TextField()
-    lerninhalt_id = models.ForeignKey(Lerninhalt, on_delete=models.CASCADE)
+        return self.name
+
+class LerninhaltBeschreibung(models.Model):
+    lerninhalt = models.ForeignKey(Lerninhalt, related_name="beschreibungen", on_delete=models.CASCADE)
+    text = models.TextField()
 
     def __str__(self):
-        return self.lerninhalt_beschreibung
-
+        return self.text[:50]

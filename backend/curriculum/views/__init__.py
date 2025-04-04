@@ -1,2 +1,4 @@
-from .example_view import *
-from .input_admin_view import *
+from .get_curriculum_view import *
+
+
+

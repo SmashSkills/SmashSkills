@@ -1,9 +1,9 @@
 from django.urls import path
 from . import views
-from django.shortcuts import render
 
 urlpatterns = [
-    path('example-view/', views.ExampleView.as_view(), name="example_view"),
-    path('formular/', views.eintrag_formular, name='lerninhalt-formular'),
-    path('erfolg/', lambda request: render(request, 'curriculum/erfolg.html'), name='formular-erfolg'),
+
+    path('curriculum/<int:pk>/', views.LehrplanDetailView.as_view(), name='curriculum'),
+    path('curricula/all/', views.LehrplanAllView.as_view(), name='curricula_all'),
+    path('curricula/list/', views.LehrplanListView.as_view(), name='curricula'), # USEAGE: http://127.0.0.1:8000/curriculum/curricula/list/?page=1
 ]

@@ -5,6 +5,7 @@ import { Routes, Route } from "react-router-dom";
 import Home from "./pages/home";
 import ToUse from "./pages/to_use";
 import CurriculaNotRegistered from "./pages/curricula_not_registered";
+import WorksheetEditor from "./pages/worksheet";
 //components
 import LayoutHeader, { NavItem } from "./layouts/navigation_layouts/header";
 
@@ -12,6 +13,7 @@ const navItems: NavItem[] = [
   { label: "Startseite", path: "/" },
   { label: "Benutzung", path: "/to-use" },
   { label: "Lehrpläne", path: "/curricula-not-registered" },
+  { label: "Arbeitsblätter", path: "/worksheet" },
 ];
 
 function App() {
@@ -28,6 +30,7 @@ function App() {
             path="/curricula-not-registered"
             element={<CurriculaNotRegistered />}
           />
+          <Route path="/worksheet" element={<WorksheetEditor />} />
         </Routes>
       </main>
     </div>

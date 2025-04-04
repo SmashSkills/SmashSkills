@@ -11,7 +11,7 @@ class LehrplanDetailView(View):
 
         response = {
             "Lehrplan_id": lehrplan.id,
-            "Klassenstufe": lehrplan.klassenstufe,
+            "Klassenstufen": lehrplan.klassenstufen,
             "Bundesland": lehrplan.bundesland,
             "Fach": lehrplan.fach,
             "Lernbereiche": []
@@ -76,7 +76,7 @@ class LehrplanListView(View):
         for lehrplan in lehrplaene:
             lehrplan_data = {
                 "Lehrplan_id": lehrplan.id,
-                "Klassenstufe": lehrplan.klassenstufe,
+                "Klassenstufen": lehrplan.klassenstufen,
                 "Bundesland": lehrplan.bundesland,
                 "Fach": lehrplan.fach,
                 "Lernbereiche": []

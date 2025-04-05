@@ -15,7 +15,6 @@ from .models import (
     Lehrplan, Lernbereich, Lernziel, LernzielBeschreibung,
     Teilziel, TeilzielBeschreibung, Lerninhalt, LerninhaltBeschreibung
 )
-from admin_interface.models import Theme
 
 # ========== Import-Export Resources ==========
 
@@ -293,35 +292,6 @@ class LerninhaltBeschreibungAdmin(ImportExportModelAdmin):
     resource_class = LerninhaltBeschreibungResource
 
 # ========== Custom AdminSite ==========
-
-# Lösche alle existierenden Themes
-Theme.objects.all().delete()
-
-# SmashSkills Theme
-theme_smashskills = Theme.objects.create(
-    name='SmashSkills Theme',
-    active=True,
-    title='SmashSkills Curriculum',
-    title_visible=True,
-    logo_visible=False,
-    css_header_background_color='#001156',  # Dunkles Blau für Header
-    css_header_text_color='#ffffff',  # Weiß für Header-Text
-    css_header_link_color='#ff5722',  # Orange für Header-Links
-    css_header_link_hover_color='#ff7043',  # Helleres Orange für Header-Link-Hover
-    css_module_background_color='#001156',  # Orange für Modulhintergründe
-    css_module_text_color='#ffffff',  # Weiß für Modultext
-    css_module_link_color='#ffffff',  # Weiß für Modullinks
-    css_module_link_hover_color='#ff7043',  # Helleres Orange für Modul-Link-Hover
-    css_module_rounded_corners=True,
-    css_generic_link_color='#ff5722',  # Orange für allgemeine Links
-    css_generic_link_hover_color='#ff7043',  # Helleres Orange für Link-Hover
-    css_save_button_background_color='#ff5722',  # Orange für Speichern-Button
-    css_save_button_background_hover_color='#f4511e',  # Dunkleres Orange für Button-Hover
-    css_save_button_text_color='#ffffff',  # Weiß für Button-Text
-    css_delete_button_background_color='#e74c3c',  # Rot für Löschen-Button
-    css_delete_button_background_hover_color='#c0392b',  # Dunkleres Rot für Button-Hover
-    css_delete_button_text_color='#ffffff',  # Weiß für Button-Text
-)
 
 class CurriculumAdminSite(admin.AdminSite):
     """Custom admin site with additional export functionality"""

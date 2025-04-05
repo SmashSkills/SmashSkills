@@ -1,0 +1,46 @@
+{% extends "admin/base_site.html" %} {% load i18n static %} {% block content %}
+<div id="content-main">
+  <div class="module">
+    <h2>CSV-Dateien importieren</h2>
+    <div class="form-row">
+      <form action="." method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div style="margin: 20px 0">
+          <p style="margin-bottom: 10px">
+            Bitte wählen Sie eine ZIP-Datei aus, die alle erforderlichen
+            CSV-Dateien enthält:
+          </p>
+          <ul style="margin-bottom: 20px; margin-left: 20px">
+            <li>01_lehrplan.csv</li>
+            <li>02_lernbereich.csv</li>
+            <li>03_lernziel.csv</li>
+            <li>04_lernziel_beschreibung.csv</li>
+            <li>05_teilziel.csv</li>
+            <li>06_teilziel_beschreibung.csv</li>
+            <li>07_lerninhalt.csv</li>
+            <li>08_lerninhalt_beschreibung.csv</li>
+          </ul>
+          <input
+            type="file"
+            name="zip_file"
+            accept=".zip"
+            required
+            style="margin-bottom: 20px"
+          />
+        </div>
+        <div class="submit-row">
+          <input
+            type="submit"
+            value="Importieren"
+            class="default"
+            style="float: right"
+          />
+          <a href="{% url 'curriculum_admin:index' %}" class="closelink"
+            >Abbrechen</a
+          >
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

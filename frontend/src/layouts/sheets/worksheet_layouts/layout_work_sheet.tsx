@@ -92,11 +92,6 @@ const WorksheetItem: React.FC<WorksheetItemProps> = ({
   const contentBeforeChange = useRef<string | null>(null);
   // Ref to prevent recursive calls during truncation
   const isTruncating = useRef(false);
-  // State für den Zeichenzähler
-  const [characterCount, setCharacterCount] = useState({
-    characters: 0,
-    words: 0,
-  });
 
   // Editor for this specific worksheet
   const editor = useEditor({
@@ -147,9 +142,6 @@ const WorksheetItem: React.FC<WorksheetItemProps> = ({
       // Store initial content when editor is fully created
       contentBeforeChange.current = JSON.stringify(editor.getJSON());
 
-      // Initialen Zeichenzähler setzen
-      updateCharacterCount(editor);
-
       // Gebe den Editor nach außen weiter
       onEditorMount(editor);
     },
@@ -158,25 +150,12 @@ const WorksheetItem: React.FC<WorksheetItemProps> = ({
       if (!isSheetFull) {
         contentBeforeChange.current = JSON.stringify(editor.getJSON());
       }
-
-      // Zeichenzähler aktualisieren
-      updateCharacterCount(editor);
     },
     onDestroy: () => {
       // Wenn der Editor zerstört wird, melden wir null nach außen
       onEditorMount(null);
     },
   });
-
-  // Funktion zum Aktualisieren des Zeichenzählers
-  const updateCharacterCount = (editorInstance: Editor) => {
-    if (!editorInstance) return;
-
-    const chars = editorInstance.storage.characterCount.characters();
-    const words = editorInstance.storage.characterCount.words();
-
-    setCharacterCount({ characters: chars, words: words });
-  };
 
   // Check if the content exceeds the A4 page height
   const checkContentOverflow = (editorInstance: Editor) => {
@@ -308,14 +287,6 @@ const WorksheetItem: React.FC<WorksheetItemProps> = ({
                 hinzugefügt werden.
               </div>
             )}
-            {/* Character count display */}
-            <div
-              className="absolute bottom-0 right-2 text-xs text-gray-500 print:hidden"
-              style={{ display: isSheetFull ? "none" : "block" }}
-            >
-              {characterCount.characters} Zeichen | {characterCount.words}{" "}
-              Wörter
-            </div>
           </div>
         ) : (
           <div

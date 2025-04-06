@@ -599,14 +599,14 @@ class LerninhaltBeschreibungInline(nested_admin.NestedTabularInline):
     """Inline admin for Learning Content Descriptions"""
     model = LerninhaltBeschreibung
     extra = 0
-    max_num = 10
+    max_num = None
     min_num = 0
 
 class LerninhaltInline(nested_admin.NestedStackedInline):
     """Inline admin for Learning Content with nested descriptions"""
     model = Lerninhalt
     extra = 0
-    max_num = 10
+    max_num = None
     min_num = 0
     inlines = [LerninhaltBeschreibungInline]
     classes = ['collapse']
@@ -615,14 +615,14 @@ class TeilzielBeschreibungInline(nested_admin.NestedTabularInline):
     """Inline admin for Sub-Objective Descriptions"""
     model = TeilzielBeschreibung
     extra = 0
-    max_num = 10
+    max_num = None
     min_num = 0
 
 class TeilzielInline(nested_admin.NestedStackedInline):
     """Inline admin for Sub-Objectives with nested descriptions and content"""
     model = Teilziel
     extra = 0
-    max_num = 10
+    max_num = None
     min_num = 0
     inlines = [TeilzielBeschreibungInline, LerninhaltInline]
     classes = ['collapse']
@@ -631,14 +631,14 @@ class LernzielBeschreibungInline(nested_admin.NestedTabularInline):
     """Inline admin for Learning Objective Descriptions"""
     model = LernzielBeschreibung
     extra = 0
-    max_num = 10
+    max_num = None
     min_num = 0
 
 class LernzielInline(nested_admin.NestedStackedInline):
     """Inline admin for Learning Objectives with nested descriptions and sub-objectives"""
     model = Lernziel
     extra = 0
-    max_num = 10
+    max_num = None
     min_num = 0
     inlines = [LernzielBeschreibungInline, TeilzielInline]
     classes = ['collapse']
@@ -647,7 +647,7 @@ class LernbereichInline(nested_admin.NestedStackedInline):
     """Inline admin for Learning Areas with nested learning objectives"""
     model = Lernbereich
     extra = 0
-    max_num = 10
+    max_num = None
     min_num = 0
     inlines = [LernzielInline]
     classes = ['collapse']

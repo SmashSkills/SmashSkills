@@ -15,13 +15,19 @@ const WorksheetEditor: React.FC<WorksheetEditorProps> = () => {
 
   // Callback, um den aktiven Editor zu aktualisieren
   const handleEditorMount = (editor: Editor | null) => {
-    setActiveEditor(editor);
+    // Nur setzen, wenn ein gültiger Editor übergeben wird.
+    // Wenn editor === null (onDestroy), wird der State nicht geändert.
+    // Dies verhindert, dass die Toolbar verschwindet, wenn ein nicht-aktives Sheet gelöscht wird.
+    // Nachteil: Wenn das *aktive* Sheet gelöscht wird, bleibt die Toolbar (zeigt auf zerstörten Editor).
+    if (editor) {
+      setActiveEditor(editor);
+    }
   };
 
   return (
     <div className="flex flex-col h-full">
       {/* TipTap Toolbar */}
-      <div className="bg-white border-b print:hidden">
+      <div className="bg-white border border-gray-100 print:hidden">
         <LayoutTipTapAddonBar editor={activeEditor} />
       </div>
 

@@ -30,7 +30,7 @@ const ButtonDeleteRounded: React.FC<ButtonDeleteRoundedProps> = ({
   return (
     <button
       onClick={onClick}
-      className={`bg-white rounded-full ${sizeClasses[size]} flex items-center justify-center shadow-md hover:bg-red-100 print:hidden border-2 border-gray-300 transition-all duration-200 ease-in-out ${className}`}
+      className={`bg-white rounded-full ${sizeClasses[size]} flex items-center justify-center shadow-md hover:bg-red-100 print:hidden border-2 border-gray-300 transition-all duration-200 ease-in-out cursor-pointer ${className}`}
       title={title}
     >
       <svg

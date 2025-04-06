@@ -1,141 +1,16 @@
 import React, { useState, useRef, useCallback } from "react";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import TextAlign from "@tiptap/extension-text-align";
-import Underline from "@tiptap/extension-underline";
-import Link from "@tiptap/extension-link";
-import Image from "@tiptap/extension-image";
-import Table from "@tiptap/extension-table";
-import TableRow from "@tiptap/extension-table-row";
-import TableCell from "@tiptap/extension-table-cell";
-import TableHeader from "@tiptap/extension-table-header";
-import TaskList from "@tiptap/extension-task-list";
-import TaskItem from "@tiptap/extension-task-item";
-import Highlight from "@tiptap/extension-highlight";
-import CharacterCount from "@tiptap/extension-character-count";
 import ButtonAddRounded from "../../../components/ui_elements/buttons/button_add_rounded";
 import ButtonDeleteRounded from "../../../components/ui_elements/buttons/button_delete_rounded";
 import ButtonPrimary from "../../../components/ui_elements/buttons/button_primary";
 import { exportToPDF } from "../../../util/pdf_logic/pdf_export";
 import { PAGE_SETTINGS } from "./page/page_settings";
+import { getEditorExtensions } from "./editor/editor_extensions";
+import { applyEditorStyles, getPdfStyles } from "./editor/editor_styles";
+import TableControls from "../../../components/tiptap_addons/TableControls";
 
-/**
- * CSS styles for editor content
- * Defines the visual appearance of the ProseMirror editor
- */
-const EDITOR_STYLES = `
-  .ProseMirror {
-    outline: none;
-    min-height: 257mm; /* 297mm (A4) - top and bottom margins */
-    line-height: ${PAGE_SETTINGS.lineHeight};
-    font-size: ${PAGE_SETTINGS.fontSize};
-    font-family: ${PAGE_SETTINGS.fontFamily};
-  }
-  
-  .ProseMirror h1 {
-    font-size: 18pt;
-    font-weight: bold;
-    margin-bottom: 16px;
-    margin-top: 0;
-  }
-  
-  .ProseMirror p {
-    margin-bottom: 8px;
-  }
-  
-  .ProseMirror ul, .ProseMirror ol {
-    padding-left: 20px;
-  }
-
-  /* Text alignment styles */
-  .ProseMirror .text-left {
-    text-align: left;
-  }
-  
-  .ProseMirror .text-center {
-    text-align: center;
-  }
-  
-  .ProseMirror .text-right {
-    text-align: right;
-  }
-  
-  .ProseMirror .text-justify {
-    text-align: justify;
-  }
-
-  /* Link styles */
-  .ProseMirror a {
-    color: #3182ce;
-    text-decoration: underline;
-    cursor: pointer;
-  }
-
-  /* Image styles */
-  .ProseMirror img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    margin: 1em 0;
-  }
-
-  /* Table styles */
-  .ProseMirror table {
-    border-collapse: collapse;
-    margin: 1em 0;
-    width: 100%;
-    table-layout: fixed;
-    overflow: hidden;
-  }
-  
-  .ProseMirror th,
-  .ProseMirror td {
-    border: 1px solid #ddd;
-    padding: 0.5em;
-    position: relative;
-    vertical-align: top;
-  }
-  
-  .ProseMirror th {
-    font-weight: bold;
-    background-color: #f8f9fa;
-  }
-
-  /* Task list styles */
-  .ProseMirror ul[data-type="taskList"] {
-    list-style: none;
-    padding: 0;
-  }
-  
-  .ProseMirror ul[data-type="taskList"] li {
-    display: flex;
-    align-items: flex-start;
-    margin-bottom: 0.5em;
-  }
-  
-  .ProseMirror ul[data-type="taskList"] li > label {
-    margin-right: 0.5em;
-    user-select: none;
-  }
-  
-  .ProseMirror ul[data-type="taskList"] li > div {
-    flex: 1;
-  }
-
-  /* Highlight styles */
-  .ProseMirror mark {
-    background-color: #fef3c7;
-    padding: 0 0.2em;
-    border-radius: 0.2em;
-  }
-`;
-
-/**
- * Document style for proper alignment
- */
-const DOCUMENT_STYLE = document.createElement("style");
-DOCUMENT_STYLE.textContent = EDITOR_STYLES;
-document.head.appendChild(DOCUMENT_STYLE);
+// Anwenden der Editor-Styles beim Import dieser Komponente
+applyEditorStyles();
 
 /**
  * Type definitions for worksheet content and data structures
@@ -225,34 +100,7 @@ const WorksheetItem: React.FC<WorksheetItemProps> = ({
 
   // Editor for this specific worksheet
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      TextAlign.configure({
-        types: ["heading", "paragraph"],
-        alignments: ["left", "center", "right", "justify"],
-        defaultAlignment: "left",
-      }),
-      Underline,
-      Link.configure({
-        openOnClick: true,
-        autolink: true,
-      }),
-      Image,
-      Table.configure({
-        resizable: true,
-      }),
-      TableRow,
-      TableCell,
-      TableHeader,
-      TaskList,
-      TaskItem.configure({
-        nested: true,
-      }),
-      Highlight,
-      CharacterCount.configure({
-        limit: null, // Kein Zeichenlimit, da wir bereits die A4-Größenbegrenzung haben
-      }),
-    ],
+    extensions: getEditorExtensions(),
     content: `
       <h1>${sheet.content.title}</h1>
       <p>${sheet.content.body}</p>
@@ -452,6 +300,7 @@ const WorksheetItem: React.FC<WorksheetItemProps> = ({
         {editor ? (
           <div className="editor-container w-full h-full">
             <EditorContent editor={editor} />
+            {editor && <TableControls editor={editor} />}
             {/* Overflow warning */}
             {isSheetFull && (
               <div className="absolute bottom-0 left-0 right-0 bg-yellow-100 text-yellow-800 p-2 text-sm text-center print:hidden">
@@ -582,14 +431,7 @@ const LayoutWorkSheet: React.FC<LayoutWorkSheetProps> = ({
           "delete-sheet-button",
         ],
         pageBreakSelectors: [".sheet-container"],
-        additionalStyles: `
-          /* Styles for content */
-          .ProseMirror, .sheet-container [contenteditable=true] {
-            font-family: ${PAGE_SETTINGS.fontFamily} !important;
-            font-size: ${PAGE_SETTINGS.fontSize} !important;
-            line-height: ${PAGE_SETTINGS.lineHeight} !important;
-          }
-        `,
+        additionalStyles: getPdfStyles(),
       });
     }
   }, [onPrint]);

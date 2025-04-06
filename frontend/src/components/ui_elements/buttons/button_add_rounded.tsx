@@ -30,7 +30,7 @@ const ButtonAddRounded: React.FC<ButtonAddRoundedProps> = ({
   return (
     <button
       onClick={onClick}
-      className={`bg-white rounded-full ${sizeClasses[size]} flex items-center justify-center shadow-md hover:shadow-lg print:hidden border-2 border-gray-300 transition-all duration-200 ease-in-out ${className}`}
+      className={`bg-white rounded-full ${sizeClasses[size]} flex items-center justify-center shadow-md hover:shadow-lg print:hidden border-2 border-gray-300 transition-all duration-200 ease-in-out hover:bg-orange-light cursor-pointer ${className}`}
       title={title}
     >
       <svg

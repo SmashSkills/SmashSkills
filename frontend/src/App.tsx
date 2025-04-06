@@ -1,6 +1,6 @@
 //utils
 import "./App.css";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 // Pages
 import Home from "./pages/home";
 import ToUse from "./pages/to_use";
@@ -17,12 +17,17 @@ const navItems: NavItem[] = [
 ];
 
 function App() {
+  const location = useLocation();
+  const isWorksheetPage = location.pathname === "/worksheet";
+
   return (
-    <div className="h-full">
+    <div
+      className={isWorksheetPage ? "h-screen overflow-hidden" : "min-h-screen"}
+    >
       <header className="fixed top-0 left-0 w-full z-40">
         <LayoutHeader items={navItems} />
       </header>
-      <main className="py-40">
+      <main className={isWorksheetPage ? "pt-16 h-screen" : "py-40"}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/to-use" element={<ToUse />} />

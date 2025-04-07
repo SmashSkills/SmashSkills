@@ -2,31 +2,32 @@ from django.http import JsonResponse
 from curriculum.models import Lehrplan
 from .base_view import BaseGetView
 from django.views import View
+from .serializers import CurriculumSerializer
 
 class LehrplanDetailView(BaseGetView):
     """
-    API endpoint for retrieving detailed information about a specific curriculum.
+    API-Endpunkt für den Abruf detaillierter Informationen zu einem bestimmten Lehrplan.
     
-    This view provides comprehensive data about a curriculum including its learning areas,
-    objectives, sub-objectives, and learning content in a hierarchical JSON structure.
+    Diese Ansicht liefert umfassende Daten zu einem Lehrplan, einschließlich seiner Lernbereiche,
+    Lernziele, Teilziele und Lerninhalte in einer hierarchischen JSON-Struktur.
     
-    Attributes:
-        model: The Lehrplan (Curriculum) model
-        serializer_fields: Basic fields to be included in serialization
-        prefetch_related_fields: Related fields to be prefetched for query optimization
+    Attribute:
+        model: Das Lehrplan-Modell
+        serializer_fields: Grundlegende Felder, die in die Serialisierung einbezogen werden sollen
+        prefetch_related_fields: Verwandte Felder, die für die Abfrageoptimierung vorgeladen werden sollen
         
     Returns:
-        JsonResponse: A detailed JSON structure containing:
-            - Curriculum basic information (id, grade levels, state, subject)
-            - Learning areas with their numbers, names, and teaching hours
-            - Learning objectives with their descriptions
-            - Sub-objectives with their descriptions
-            - Learning content with their descriptions
+        JsonResponse: Eine detaillierte JSON-Struktur mit:
+            - Grundlegenden Lehrplaninformationen (ID, Klassenstufen, Bundesland, Fach)
+            - Lernbereichen mit ihren Nummern, Namen und Unterrichtsstunden
+            - Lernzielen mit ihren Beschreibungen
+            - Teilzielen mit ihren Beschreibungen
+            - Lerninhalten mit ihren Beschreibungen
             
-    Usage:
+    Verwendung:
         GET /curriculum/curriculum/<id>/
         
-        Example Response:
+        Beispielantwort:
         {
             "Lehrplan_id": 1,
             "Klassenstufen": "5",
@@ -45,108 +46,66 @@ class LehrplanDetailView(BaseGetView):
     
     model = Lehrplan
     serializer_fields = ['id', 'klassenstufen', 'bundesland', 'fach']
-    prefetch_related_fields = [
-        'lernbereiche',
-        'lernbereiche__lernziele',
-        'lernbereiche__lernziele__beschreibungen',
-        'lernbereiche__lernziele__teilziele',
-        'lernbereiche__lernziele__teilziele__beschreibungen',
-        'lernbereiche__lernziele__teilziele__lerninhalte',
-        'lernbereiche__lernziele__teilziele__lerninhalte__beschreibungen'
-    ]
+    prefetch_related_fields = CurriculumSerializer.get_prefetch_related_fields()
 
     def serialize_object(self, lehrplan):
         """
-        Serializes a curriculum object with all its related data into a hierarchical structure.
+        Überschreibt die Serialisierungsmethode, um den CurriculumSerializer zu verwenden.
         
         Args:
-            lehrplan: The curriculum object to serialize
+            lehrplan: Das zu serialisierende Lehrplanobjekt
             
         Returns:
-            dict: A dictionary containing the complete curriculum structure
+            dict: Die serialisierte hierarchische Struktur des Lehrplans mit allen zugehörigen Daten
         """
-        data = {
-            "Lehrplan_id": lehrplan.id,
-            "Klassenstufen": lehrplan.klassenstufen,
-            "Bundesland": lehrplan.bundesland,
-            "Fach": lehrplan.fach,
-            "Lernbereiche": []
-        }
-
-        for lb in lehrplan.lernbereiche.all():
-            lb_data = {
-                "Lernbereich_id": lb.id,
-                "Lernbereich_Nummer": lb.nummer,
-                "Lernbereich_name": lb.name,
-                "Unterrichtsstunden": lb.unterrichtsstunden,
-                "Lernziele": []
-            }
-
-            for lz in lb.lernziele.all():
-                lz_data = {
-                    "Lernziel_id": lz.id,
-                    "Lernziel_name": lz.name,
-                    "Lernziel_Beschreibungen": [b.text for b in lz.beschreibungen.all()],
-                    "Teilziele": []
-                }
-
-                for tz in lz.teilziele.all():
-                    tz_data = {
-                        "Teilziel_id": tz.id,
-                        "Teilziel_name": tz.name,
-                        "Teilziel_beschreibungen": [b.text for b in tz.beschreibungen.all()],
-                        "Lerninhalte": []
-                    }
-
-                    for li in tz.lerninhalte.all():
-                        li_data = {
-                            "Lerninhalt_id": li.id,
-                            "Lerninhalt_name": li.name,
-                            "Lerninhalt_beschreibungen": [b.text for b in li.beschreibungen.all()]
-                        }
-                        tz_data["Lerninhalte"].append(li_data)
-
-                    lz_data["Teilziele"].append(tz_data)
-
-                lb_data["Lernziele"].append(lz_data)
-
-            data["Lernbereiche"].append(lb_data)
-
-        return data
+        return CurriculumSerializer.serialize_curriculum(lehrplan)
 
     def get(self, request, pk):
+        """
+        Verarbeitet GET-Anfragen für einen spezifischen Lehrplan.
+        
+        Ruft einen einzelnen Lehrplan anhand seiner ID ab und gibt die detaillierten
+        Informationen in einer hierarchischen JSON-Struktur zurück.
+        
+        Args:
+            request: Die HTTP-Anfrage
+            pk: Die ID des anzuzeigenden Lehrplans
+            
+        Returns:
+            JsonResponse: Die serialisierte Darstellung des Lehrplans mit allen zugehörigen Daten
+        """
         return self.get_detail_response(request, pk)
 
 
 class LehrplanListView(BaseGetView):
     """
-    API endpoint for retrieving a paginated list of curricula with filtering options.
+    API-Endpunkt für den Abruf einer paginierten Liste von Lehrplänen mit Filteroptionen.
     
-    This view provides a paginated list of curricula with basic information and
-    supports filtering by state (Bundesland) and subject (Fach).
+    Diese Ansicht bietet eine paginierte Liste von Lehrplänen mit grundlegenden Informationen und
+    unterstützt die Filterung nach Bundesland und Fach.
     
-    Attributes:
-        model: The Lehrplan (Curriculum) model
-        serializer_fields: Fields to include in the response
-        page_size: Number of items per page
+    Attribute:
+        model: Das Lehrplan-Modell
+        serializer_fields: Felder, die in die Antwort einbezogen werden sollen
+        page_size: Anzahl der Elemente pro Seite
         
     Returns:
-        JsonResponse: A paginated list containing:
-            - results: List of curricula with basic information
-            - pagination: Information about current page, total pages, and total items
+        JsonResponse: Eine paginierte Liste mit:
+            - results: Liste der Lehrpläne mit grundlegenden Informationen
+            - pagination: Informationen über aktuelle Seite, Gesamtseitenzahl und Gesamtanzahl der Elemente
             
-    Usage:
+    Verwendung:
         GET /curriculum/curricula/
         
-        Optional Query Parameters:
-        - page: Page number (default: 1)
-        - bundesland: Filter by state
-        - fach: Filter by subject
+        Optionale Abfrageparameter:
+        - page: Seitennummer (Standard: 1)
+        - bundesland: Filter nach Bundesland
+        - fach: Filter nach Fach
         
-        Example:
+        Beispiel:
         GET /curriculum/curricula/?page=1&bundesland=Bayern&fach=Mathematik
         
-        Response:
+        Antwort:
         {
             "results": [
                 {
@@ -171,14 +130,14 @@ class LehrplanListView(BaseGetView):
 
     def apply_filters(self, queryset, request):
         """
-        Applies filters to the queryset based on request parameters.
+        Wendet Filter auf das QuerySet basierend auf Anfrageparametern an.
         
         Args:
-            queryset: The initial queryset to filter
-            request: The HTTP request object containing filter parameters
+            queryset: Das initiale QuerySet, das gefiltert werden soll
+            request: Das HTTP-Anfrageobjekt mit Filterparametern
             
         Returns:
-            QuerySet: The filtered queryset
+            QuerySet: Das gefilterte QuerySet
         """
         bundesland = request.GET.get('bundesland')
         fach = request.GET.get('fach')
@@ -191,24 +150,37 @@ class LehrplanListView(BaseGetView):
         return queryset
 
     def get(self, request):
+        """
+        Verarbeitet GET-Anfragen für die paginierte Liste von Lehrplänen.
+        
+        Ruft eine gefilterte und paginierte Liste von Lehrplänen ab und 
+        gibt sie in einem standardisierten JSON-Format zurück. Die Ergebnisse
+        können nach Bundesland und Fach gefiltert werden.
+        
+        Args:
+            request: Die HTTP-Anfrage mit optionalen Abfrageparametern für Filterung und Paginierung
+            
+        Returns:
+            JsonResponse: Die paginierte Liste von Lehrplänen mit Paginierungsinformationen
+        """
         return self.get_list_response(request)
 
 
 class LehrplanAllView(View):
     """
-    API endpoint for retrieving all curricula without pagination.
+    API-Endpunkt für den Abruf aller Lehrpläne ohne Paginierung.
     
-    This view returns all curricula with their complete hierarchical structure
-    including learning areas, objectives, sub-objectives, and learning content.
-    Note: Use with caution on large datasets as it returns all records at once.
+    Diese Ansicht gibt alle Lehrpläne mit ihrer vollständigen hierarchischen Struktur zurück,
+    einschließlich Lernbereichen, Lernzielen, Teilzielen und Lerninhalten.
+    Hinweis: Bei großen Datensätzen mit Vorsicht verwenden, da alle Datensätze auf einmal zurückgegeben werden.
     
     Returns:
-        JsonResponse: A list of all curricula with their complete structure
+        JsonResponse: Eine Liste aller Lehrpläne mit ihrer vollständigen Struktur
         
-    Usage:
+    Verwendung:
         GET /curriculum/curricula/all/
         
-        Response:
+        Antwort:
         [
             {
                 "Lehrplan_id": 1,
@@ -227,78 +199,34 @@ class LehrplanAllView(View):
             ...
         ]
         
-    Warning:
-        This endpoint returns all records without pagination.
-        For large datasets, consider using the paginated endpoint
-        (/curriculum/curricula/) instead.
+    Warnung:
+        Dieser Endpunkt gibt alle Datensätze ohne Paginierung zurück.
+        Für große Datensätze sollte stattdessen der paginierte Endpunkt
+        (/curriculum/curricula/) verwendet werden.
     """
     
     def get(self, request):
         """
-        Retrieves and serializes all curriculum data.
+        Verarbeitet GET-Anfragen für alle Lehrpläne ohne Paginierung.
         
+        Ruft alle verfügbaren Lehrpläne ab und gibt sie mit ihrer vollständigen
+        hierarchischen Struktur zurück. Da die Methode alle Datensätze auf einmal
+        lädt und serialisiert, kann dies bei großen Datenmengen zu Performance-Problemen
+        führen. Die Daten werden optimiert durch Prefetch-Related-Abfragen geladen,
+        um die Anzahl der Datenbankabfragen zu minimieren.
+        
+        Args:
+            request: Die HTTP-Anfrage
+            
         Returns:
-            JsonResponse: A list of all curricula with their complete structure
+            JsonResponse: Eine Liste aller Lehrpläne mit ihrer vollständigen Struktur
         """
         lehrplaene = Lehrplan.objects.prefetch_related(
-            'lernbereiche',
-            'lernbereiche__lernziele',
-            'lernbereiche__lernziele__beschreibungen',
-            'lernbereiche__lernziele__teilziele',
-            'lernbereiche__lernziele__teilziele__beschreibungen',
-            'lernbereiche__lernziele__teilziele__lerninhalte',
-            'lernbereiche__lernziele__teilziele__lerninhalte__beschreibungen'
+            *CurriculumSerializer.get_prefetch_related_fields()
         ).all()
 
         result = []
         for lehrplan in lehrplaene:
-            data = {
-                "Lehrplan_id": lehrplan.id,
-                "Klassenstufen": lehrplan.klassenstufen,
-                "Bundesland": lehrplan.bundesland,
-                "Fach": lehrplan.fach,
-                "Lernbereiche": []
-            }
-
-            for lb in lehrplan.lernbereiche.all():
-                lb_data = {
-                    "Lernbereich_id": lb.id,
-                    "Lernbereich_Nummer": lb.nummer,
-                    "Lernbereich_name": lb.name,
-                    "Unterrichtsstunden": lb.unterrichtsstunden,
-                    "Lernziele": []
-                }
-
-                for lz in lb.lernziele.all():
-                    lz_data = {
-                        "Lernziel_id": lz.id,
-                        "Lernziel_name": lz.name,
-                        "Lernziel_Beschreibungen": [b.text for b in lz.beschreibungen.all()],
-                        "Teilziele": []
-                    }
-
-                    for tz in lz.teilziele.all():
-                        tz_data = {
-                            "Teilziel_id": tz.id,
-                            "Teilziel_name": tz.name,
-                            "Teilziel_beschreibungen": [b.text for b in tz.beschreibungen.all()],
-                            "Lerninhalte": []
-                        }
-
-                        for li in tz.lerninhalte.all():
-                            li_data = {
-                                "Lerninhalt_id": li.id,
-                                "Lerninhalt_name": li.name,
-                                "Lerninhalt_beschreibungen": [b.text for b in li.beschreibungen.all()]
-                            }
-                            tz_data["Lerninhalte"].append(li_data)
-
-                        lz_data["Teilziele"].append(tz_data)
-
-                    lb_data["Lernziele"].append(lz_data)
-
-                data["Lernbereiche"].append(lb_data)
-
-            result.append(data)
+            result.append(CurriculumSerializer.serialize_curriculum(lehrplan))
 
         return JsonResponse(result, safe=False, json_dumps_params={'indent': 2, 'ensure_ascii': False})

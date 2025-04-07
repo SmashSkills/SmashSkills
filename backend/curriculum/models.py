@@ -1,88 +1,143 @@
 from django.db import models
 
-class Lehrplan(models.Model):
+class BaseModel(models.Model):
     """
-    Represents a curriculum with grade levels, state and subject.
+    Abstrakte Basisklasse, die gemeinsame Felder und Funktionalitäten bereitstellt.
+    """
+    class Meta:
+        abstract = True
+
+
+class NamedModel(BaseModel):
+    """
+    Abstrakte Basisklasse für Modelle mit einem Namensfeld.
+    """
+    name = models.CharField(max_length=255)
+    
+    class Meta:
+        abstract = True
+        
+    def __str__(self):
+        return self.name
+
+
+class TextualDescriptionModel(BaseModel):
+    """
+    Abstrakte Basisklasse für Modelle mit einer Textbeschreibung.
+    """
+    text = models.TextField()
+    
+    class Meta:
+        abstract = True
+        
+    def __str__(self):
+        return self.text[:50] + ('...' if len(self.text) > 50 else '')
+
+
+class Lehrplan(BaseModel):
+    """
+    Repräsentiert einen Lehrplan mit Klassenstufen, Bundesland und Fach.
     """
     klassenstufen = models.CharField(
         max_length=100,
-        help_text="Mehrere Klassenstufen durch Komma trennen, z. B. '3, 4, 5a'"
+        help_text="Mehrere Klassenstufen durch Komma trennen, z. B. '3, 4, 5a'"
     )
     bundesland = models.CharField(max_length=100)
     fach = models.CharField(max_length=100)
+    
+    class Meta:
+        verbose_name = "Lehrplan"
+        verbose_name_plural = "Lehrpläne"
+        ordering = ['bundesland', 'fach', 'klassenstufen']
 
     def __str__(self):
         return f"{self.fach} (Klasse {self.klassenstufen}, {self.bundesland})"
 
-class Lernbereich(models.Model):
+
+class Lernbereich(BaseModel):
     """
-    Represents a learning area within a curriculum.
-    Contains number, name and teaching hours.
+    Repräsentiert einen Lernbereich innerhalb eines Lehrplans.
+    Enthält Nummer, Name und Unterrichtsstunden.
     """
     lehrplan = models.ForeignKey(Lehrplan, related_name="lernbereiche", on_delete=models.CASCADE)
     nummer = models.PositiveIntegerField()
     name = models.CharField(max_length=255)
     unterrichtsstunden = models.PositiveIntegerField()
+    
+    class Meta:
+        verbose_name = "Lernbereich"
+        verbose_name_plural = "Lernbereiche"
+        ordering = ['lehrplan', 'nummer']
+        unique_together = ['lehrplan', 'nummer']
 
     def __str__(self):
         return f"{self.name} (#{self.nummer})"
 
-class Lernziel(models.Model):
+
+class Lernziel(NamedModel):
     """
-    Represents a learning objective within a learning area.
+    Repräsentiert ein Lernziel innerhalb eines Lernbereichs.
     """
     lernbereich = models.ForeignKey(Lernbereich, related_name="lernziele", on_delete=models.CASCADE)
-    name = models.CharField(max_length=255)
+    
+    class Meta:
+        verbose_name = "Lernziel"
+        verbose_name_plural = "Lernziele"
+        ordering = ['lernbereich', 'id']
 
-    def __str__(self):
-        return self.name
 
-class LernzielBeschreibung(models.Model):
+class LernzielBeschreibung(TextualDescriptionModel):
     """
-    Represents a detailed description of a learning objective.
+    Repräsentiert eine detaillierte Beschreibung eines Lernziels.
     """
     lernziel = models.ForeignKey(Lernziel, related_name="beschreibungen", on_delete=models.CASCADE)
-    text = models.TextField()
+    
+    class Meta:
+        verbose_name = "Lernzielbeschreibung"
+        verbose_name_plural = "Lernzielbeschreibungen"
 
-    def __str__(self):
-        return self.text[:50]
 
-class Teilziel(models.Model):
+class Teilziel(NamedModel):
     """
-    Represents a sub-objective within a learning objective.
+    Repräsentiert ein Teilziel innerhalb eines Lernziels.
     """
     lernziel = models.ForeignKey(Lernziel, related_name="teilziele", on_delete=models.CASCADE)
-    name = models.CharField(max_length=255)
+    
+    class Meta:
+        verbose_name = "Teilziel"
+        verbose_name_plural = "Teilziele"
+        ordering = ['lernziel', 'id']
 
-    def __str__(self):
-        return self.name
 
-class TeilzielBeschreibung(models.Model):
+class TeilzielBeschreibung(TextualDescriptionModel):
     """
-    Represents a detailed description of a sub-objective.
+    Repräsentiert eine detaillierte Beschreibung eines Teilziels.
     """
     teilziel = models.ForeignKey(Teilziel, related_name="beschreibungen", on_delete=models.CASCADE)
-    text = models.TextField()
+    
+    class Meta:
+        verbose_name = "Teilzielbeschreibung"
+        verbose_name_plural = "Teilzielbeschreibungen"
 
-    def __str__(self):
-        return self.text[:50]
 
-class Lerninhalt(models.Model):
+class Lerninhalt(NamedModel):
     """
-    Represents learning content associated with a sub-objective.
+    Repräsentiert einen Lerninhalt, der einem Teilziel zugeordnet ist.
     """
     teilziel = models.ForeignKey(Teilziel, related_name="lerninhalte", on_delete=models.CASCADE)
-    name = models.CharField(max_length=255)
+    
+    class Meta:
+        verbose_name = "Lerninhalt"
+        verbose_name_plural = "Lerninhalte"
+        ordering = ['teilziel', 'id']
 
-    def __str__(self):
-        return self.name
 
-class LerninhaltBeschreibung(models.Model):
+class LerninhaltBeschreibung(TextualDescriptionModel):
     """
-    Represents a detailed description of learning content.
+    Repräsentiert eine detaillierte Beschreibung eines Lerninhalts.
     """
     lerninhalt = models.ForeignKey(Lerninhalt, related_name="beschreibungen", on_delete=models.CASCADE)
-    text = models.TextField()
-
-    def __str__(self):
-        return self.text[:50]
+    
+    class Meta:
+        verbose_name = "Lerninhaltbeschreibung"
+        verbose_name_plural = "Lerninhaltbeschreibungen"

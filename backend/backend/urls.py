@@ -1,18 +1,18 @@
 """
-URL configuration for backend project.
+URL-Konfiguration für das Backend-Projekt.
 
-The `urlpatterns` list routes URLs to views. For more information please see:
+Die Liste `urlpatterns` leitet URLs zu Views weiter. Weitere Informationen finden Sie unter:
     https://docs.djangoproject.com/en/5.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+Beispiele:
+Funktionsbasierte Views
+    1. Einen Import hinzufügen:  from my_app import views
+    2. Einen URL-Pfad hinzufügen:  path('', views.home, name='home')
+Klassenbasierte Views
+    1. Einen Import hinzufügen:  from other_app.views import Home
+    2. Einen URL-Pfad hinzufügen:  path('', Home.as_view(), name='home')
+Eine andere URLconf einbinden
+    1. Die include()-Funktion importieren: from django.urls import include, path
+    2. Einen URL-Pfad hinzufügen:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
 from django.urls import path, include

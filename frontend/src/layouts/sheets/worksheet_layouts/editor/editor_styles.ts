@@ -1,4 +1,4 @@
-import { PAGE_SETTINGS } from "../page/page_settings";
+import { PAGE_SETTINGS } from "../util/page_settings";
 
 /**
  * CSS styles for editor content

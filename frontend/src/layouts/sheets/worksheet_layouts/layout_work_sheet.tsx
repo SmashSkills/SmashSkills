@@ -1,77 +1,29 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
+import { useDroppable } from "@dnd-kit/core";
 import ButtonAddRounded from "../../../components/ui_elements/buttons/button_add_rounded";
 import ButtonDeleteRounded from "../../../components/ui_elements/buttons/button_delete_rounded";
 import ButtonPrimary from "../../../components/ui_elements/buttons/button_primary";
 import { exportToPDF } from "../../../util/pdf_logic/pdf_export";
-import { PAGE_SETTINGS } from "./page/page_settings";
+import { PAGE_SETTINGS } from "./util/page_settings";
 import { getEditorExtensions } from "./editor/editor_extensions";
 import { applyEditorStyles, getPdfStyles } from "./editor/editor_styles";
 import TableControls from "../../../components/tiptap_addons/TableControls";
+import * as fabric from "fabric";
+import type {
+  // WorksheetContent, // Wird indirekt über WorksheetData verwendet
+  WorksheetData,
+  LayoutWorkSheetProps,
+  WorksheetItemProps,
+  // DropTargetInfo // Wird indirekt über Props verwendet
+} from "./worksheet.types";
+import {
+  generateUniqueId,
+  createDefaultWorksheet,
+} from "./util/worksheetUtils";
 
 // Anwenden der Editor-Styles beim Import dieser Komponente
 applyEditorStyles();
-
-/**
- * Type definitions for worksheet content and data structures
- */
-interface WorksheetContent {
-  title: string;
-  body: string;
-}
-
-/**
- * Represents a complete worksheet with unique identifier and content
- */
-interface WorksheetData {
-  id: string;
-  content: WorksheetContent;
-}
-
-/**
- * Props for the main worksheet layout component
- */
-interface LayoutWorkSheetProps {
-  className?: string;
-  onPrint?: () => void;
-  onEditorMount?: (editor: Editor | null) => void;
-}
-
-/**
- * Props for individual worksheet items
- */
-interface WorksheetItemProps {
-  sheet: WorksheetData;
-  index: number;
-  className?: string;
-  isLast: boolean;
-  onDelete: (id: string) => void;
-  onAdd: () => void;
-  onEditorMount: (editor: Editor | null) => void;
-}
-
-/**
- * Helper Functions
- */
-
-/**
- * Generates a unique identifier for worksheets
- * @returns {string} A unique ID combining timestamp and random number
- */
-const generateUniqueId = (): string =>
-  `sheet-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-
-/**
- * Creates a default worksheet with initial content
- * @returns {WorksheetData} A new worksheet with default title and body
- */
-const createDefaultWorksheet = (): WorksheetData => ({
-  id: generateUniqueId(),
-  content: {
-    title: "Mein Arbeitsblatt",
-    body: "Klicken Sie hier, um zu beginnen...",
-  },
-});
 
 /**
  * WorksheetItem Component
@@ -85,13 +37,23 @@ const WorksheetItem: React.FC<WorksheetItemProps> = ({
   onDelete,
   onAdd,
   onEditorMount,
+  dropTargetInfo,
+  onShapeDropped,
 }) => {
-  // State to track if the sheet is full
   const [isSheetFull, setIsSheetFull] = useState(false);
-  // Ref to track the content before changes
   const contentBeforeChange = useRef<string | null>(null);
-  // Ref to prevent recursive calls during truncation
   const isTruncating = useRef(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
+
+  // Droppable-Logik für dieses spezifische Arbeitsblatt
+  const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({
+    id: `droppable-sheet-${sheet.id}`,
+    data: {
+      accepts: "shape",
+      sheetId: sheet.id,
+    },
+  });
 
   // Editor for this specific worksheet
   const editor = useEditor({
@@ -105,33 +67,28 @@ const WorksheetItem: React.FC<WorksheetItemProps> = ({
         class: "focus:outline-none w-full h-full",
       },
     },
-    onTransaction: ({ editor }) => {
-      // Skip this check if we're already checking
-      if (isTruncating.current) return;
+    onTransaction: ({ editor, transaction }) => {
+      if (!transaction.docChanged || isTruncating.current) return;
 
-      // Check if this transaction caused overflow
       const isOverflowing = checkContentOverflow(editor);
-
       if (isOverflowing) {
-        // Markieren, dass wir gerade eine Überprüfung durchführen
         isTruncating.current = true;
-
-        // Wenn überlauf erkannt wurde, auf den vorherigen Zustand zurücksetzen
+        console.warn("[WorksheetItem] Limit reached, reverting content...");
         if (contentBeforeChange.current) {
-          editor.commands.setContent(JSON.parse(contentBeforeChange.current));
+          editor.commands.setContent(
+            JSON.parse(contentBeforeChange.current),
+            false
+          );
         }
-
         setIsSheetFull(true);
-        console.warn(
-          "Das Arbeitsblatt ist voll. Es kann kein weiterer Inhalt hinzugefügt werden."
-        );
-
-        // Sperre aufheben nach kurzem Delay
         setTimeout(() => {
           isTruncating.current = false;
         }, 50);
-      } else if (!isOverflowing && isSheetFull) {
-        setIsSheetFull(false);
+      } else {
+        if (isSheetFull) {
+          setIsSheetFull(false);
+        }
+        contentBeforeChange.current = JSON.stringify(editor.getJSON());
       }
     },
     onBeforeCreate: () => {
@@ -139,174 +96,302 @@ const WorksheetItem: React.FC<WorksheetItemProps> = ({
       // Also setzen wir hier nichts
     },
     onCreate: ({ editor }) => {
-      // Store initial content when editor is fully created
       contentBeforeChange.current = JSON.stringify(editor.getJSON());
-
-      // Gebe den Editor nach außen weiter
       onEditorMount(editor);
     },
-    onUpdate: ({ editor }) => {
-      // Store content before possible future changes, but only if we're not full
-      if (!isSheetFull) {
-        contentBeforeChange.current = JSON.stringify(editor.getJSON());
-      }
+    onUpdate: () => {
+      // '{ editor }' Parameter entfernt
+      // NICHTS MEHR HIER TUN - Die Aktualisierung von contentBeforeChange
+      // passiert jetzt nur noch am Ende einer erfolgreichen onTransaction.
     },
     onDestroy: () => {
-      // Wenn der Editor zerstört wird, melden wir null nach außen
       onEditorMount(null);
     },
   });
 
+  // Initialisiere Fabric.js Canvas, wenn die Komponente gemountet wird
+  useEffect(() => {
+    if (canvasRef.current) {
+      const calculateDimension = (dimensionMm: number, marginMm: string) => {
+        const margin = parseFloat(marginMm) || 0;
+        return (dimensionMm - margin * 2) * 3.78; // mm * 2 Ränder * px/mm
+      };
+      const canvasWidth = calculateDimension(210, PAGE_SETTINGS.marginLeft); // A4 Breite
+      const canvasHeight = calculateDimension(297, PAGE_SETTINGS.marginTop); // A4 Höhe
+
+      console.log(
+        `[Canvas Init ${sheet.id}] Initializing canvas with dimensions:`,
+        {
+          width: canvasWidth,
+          height: canvasHeight,
+          marginLeft: PAGE_SETTINGS.marginLeft,
+          marginTop: PAGE_SETTINGS.marginTop,
+        }
+      );
+
+      const canvas = new fabric.Canvas(canvasRef.current, {
+        width: canvasWidth,
+        height: canvasHeight,
+      });
+      fabricCanvasRef.current = canvas;
+
+      // DEBUG: Zeichne ein Testobjekt, um zu prüfen, ob der Canvas grundsätzlich funktioniert
+      const testRect = new fabric.Rect({
+        left: 100,
+        top: 100,
+        fill: "blue",
+        width: 50,
+        height: 50,
+      });
+      canvas.add(testRect);
+      canvas.requestRenderAll();
+      console.log(
+        `[Canvas Init ${sheet.id}] Added test rectangle, objects count:`,
+        canvas.getObjects().length
+      );
+
+      // TODO: Hier gespeicherte Formen laden (später)
+
+      // Cleanup-Funktion
+      return () => {
+        if (fabricCanvasRef.current) {
+          fabricCanvasRef.current.dispose();
+          fabricCanvasRef.current = null;
+        }
+      };
+    }
+  }, []);
+
   // Check if the content exceeds the A4 page height
   const checkContentOverflow = (editorInstance: Editor) => {
     if (!editorInstance) return false;
-
     const editorElement = editorInstance.view.dom;
     const contentHeight = editorElement.scrollHeight;
-    const pageHeight = 297 - 40; // 297mm (A4) minus Ränder
-    const pageHeightPx = pageHeight * 3.78; // Etwa 3.78px pro mm
-
+    const pageHeight =
+      297 -
+      (parseFloat(PAGE_SETTINGS.marginTop) || 0) -
+      (parseFloat(PAGE_SETTINGS.marginBottom) || 0);
+    const pageHeightPx = pageHeight * 3.78;
     return contentHeight > pageHeightPx;
   };
 
-  // Initial check for overflow
+  // Effect für overflow/paste/keydown
   React.useEffect(() => {
-    if (editor) {
-      // Überprüfe initial, ob der Inhalt passt
-      const isOverflowing = checkContentOverflow(editor);
-      setIsSheetFull(isOverflowing);
+    if (!editor) return;
+    const handlePaste = (event: ClipboardEvent) => {
+      if (isSheetFull || isTruncating.current) {
+        event.preventDefault();
+        console.warn(
+          "[WorksheetItem] Paste prevented: Sheet full or truncating."
+        );
+        return;
+      }
+      const contentBeforePaste = JSON.stringify(editor.getJSON());
+      setTimeout(() => {
+        if (checkContentOverflow(editor) && !isTruncating.current) {
+          isTruncating.current = true;
+          console.warn("[WorksheetItem] Paste caused overflow, reverting...");
+          editor.commands.setContent(JSON.parse(contentBeforePaste), false);
+          setIsSheetFull(true);
+          setTimeout(() => {
+            isTruncating.current = false;
+          }, 50);
+        }
+      }, 50);
+    };
 
-      // Blockiere Einfügeaktionen, wenn das Blatt voll ist oder wenn das Einfügen
-      // dazu führen würde, dass das Blatt überläuft
-      const handlePaste = (event: ClipboardEvent) => {
-        // Wenn das Blatt bereits voll ist, Einfügen verhindern
-        if (isSheetFull) {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (isSheetFull || isTruncating.current) {
+        const allowedKeys = [
+          "ArrowUp",
+          "ArrowDown",
+          "ArrowLeft",
+          "ArrowRight",
+          "Backspace",
+          "Delete",
+          "Tab",
+          "Escape",
+          "Enter",
+        ];
+        if (
+          !event.ctrlKey &&
+          !event.metaKey &&
+          !allowedKeys.includes(event.key)
+        ) {
           event.preventDefault();
-          console.warn(
-            "Das Arbeitsblatt ist voll. Es kann kein weiterer Inhalt eingefügt werden."
-          );
-          return;
+          return false;
         }
+      }
+    };
 
-        // Speichere aktuellen Zustand vor dem Einfügen
-        contentBeforeChange.current = JSON.stringify(editor.getJSON());
+    editor.view.dom.addEventListener("paste", handlePaste);
+    editor.view.dom.addEventListener("keydown", handleKeyDown);
 
-        // Nach dem Einfügen überprüfen, verzögert ausführen
-        setTimeout(() => {
-          if (checkContentOverflow(editor) && !isTruncating.current) {
-            isTruncating.current = true;
-
-            // Wenn das Einfügen dazu geführt hat, dass das Blatt überläuft,
-            // auf den vorherigen Zustand zurücksetzen
-            if (contentBeforeChange.current) {
-              editor.commands.setContent(
-                JSON.parse(contentBeforeChange.current)
-              );
-            }
-
-            setIsSheetFull(true);
-            console.warn(
-              "Der eingefügte Text ist zu groß und würde das A4-Format überschreiten."
-            );
-
-            setTimeout(() => {
-              isTruncating.current = false;
-            }, 50);
-          }
-        }, 50);
-      };
-
-      // Block keyboard input if sheet is full - Verhindert Eingabe wie eine "Wand"
-      const handleKeyDown = (event: KeyboardEvent) => {
-        if (isSheetFull) {
-          // Allow navigation keys, delete, backspace, ctrl+key combinations
-          const allowedKeys = [
-            "ArrowUp",
-            "ArrowDown",
-            "ArrowLeft",
-            "ArrowRight",
-            "Backspace",
-            "Delete",
-            "Tab",
-            "Escape",
-            "Enter",
-          ];
-
-          // Allow ctrl/cmd key combinations (for copy, cut, etc.)
-          if (event.ctrlKey || event.metaKey) {
-            return;
-          }
-
-          // Block all other keys if not allowed
-          if (!allowedKeys.includes(event.key)) {
-            // Alle Eingaben blockieren, wenn das Blatt voll ist (strenge Wand)
-            event.preventDefault();
-            return false;
-          }
-        }
-      };
-
-      // Add event listeners
-      editor.view.dom.addEventListener("paste", handlePaste);
-      editor.view.dom.addEventListener("keydown", handleKeyDown);
-
-      return () => {
-        // Remove event listeners on cleanup
-        editor.view.dom.removeEventListener("paste", handlePaste);
-        editor.view.dom.removeEventListener("keydown", handleKeyDown);
-      };
-    }
+    return () => {
+      editor.view.dom.removeEventListener("paste", handlePaste);
+      editor.view.dom.removeEventListener("keydown", handleKeyDown);
+    };
   }, [editor, isSheetFull]);
+
+  // Style für die Dropzone (visuelles Feedback für den Editor-Bereich)
+  const dropzoneStyle: React.CSSProperties = {
+    border: isOver ? "2px dashed #4ade80" : "none",
+    borderRadius: isOver ? "8px" : "0px",
+    transition: "border 0.2s ease-in-out, border-radius 0.2s ease-in-out",
+    height: "100%",
+    width: "100%",
+    position: "relative",
+    zIndex: 0,
+  };
+
+  // Neuer useEffect, um auf Drops zu reagieren
+  useEffect(() => {
+    if (
+      dropTargetInfo &&
+      dropTargetInfo.sheetId === sheet.id &&
+      fabricCanvasRef.current &&
+      canvasRef.current
+    ) {
+      const canvas = fabricCanvasRef.current;
+      const { shapeType, clientX, clientY } = dropTargetInfo;
+
+      // Wir benötigen ein Element, das die tatsächliche Position des Worksheets im Viewport angibt
+      const sheetContainer = document.getElementById(sheet.id);
+
+      if (!sheetContainer) {
+        console.error(`Sheet container with ID ${sheet.id} not found`);
+        return;
+      }
+
+      const sheetRect = sheetContainer.getBoundingClientRect();
+      // Jetzt nutzen wir die Position des Sheet-Containers als Basis
+      const localX = clientX - sheetRect.left;
+      const localY = clientY - sheetRect.top;
+
+      console.log(`[WorksheetItem ${sheet.id}] Sheet rect:`, {
+        sheetRect,
+        clientX,
+        clientY,
+        localX,
+        localY,
+      });
+
+      let fabricObject: fabric.Object | null = null;
+      const originXValue: fabric.TOriginX = "center";
+      const originYValue: fabric.TOriginY = "center";
+      const options = {
+        left: localX,
+        top: localY,
+        fill: "rgba(255,0,0,0.5)", // Rot und deutlich sichtbar
+        stroke: "#ff0000",
+        strokeWidth: 3,
+        originX: originXValue,
+        originY: originYValue,
+      };
+
+      if (shapeType === "rectangle") {
+        fabricObject = new fabric.Rect({ ...options, width: 50, height: 50 });
+      } else if (shapeType === "circle") {
+        fabricObject = new fabric.Circle({ ...options, radius: 25 });
+      } else if (shapeType === "line") {
+        console.warn("Line shape placeholder.");
+        fabricObject = new fabric.Rect({
+          ...options,
+          width: 50,
+          height: 4,
+          originY: "top",
+        });
+      }
+
+      if (fabricObject) {
+        console.log(
+          `[WorksheetItem ${sheet.id}] Fabric Object Created:`,
+          fabricObject
+        );
+        canvas.add(fabricObject);
+        canvas.requestRenderAll();
+        console.log(
+          `[WorksheetItem ${sheet.id}] Objects count:`,
+          canvas.getObjects().length
+        );
+      } else {
+        console.warn(
+          `[WorksheetItem ${sheet.id}] Could not create fabric object for shapeType: ${shapeType}`
+        );
+      }
+
+      onShapeDropped();
+    }
+  }, [dropTargetInfo, sheet.id, onShapeDropped]);
 
   return (
     <div id={sheet.id} className="sheet-container mb-12 print:mb-0 relative">
-      {/* Delete button - only show for worksheets after the first one */}
+      {/* Delete button */}
       {index > 0 && (
         <ButtonDeleteRounded
           onClick={() => onDelete(sheet.id)}
-          className="absolute -top-3 -right-3 z-10"
+          className="absolute -top-3 -right-3 z-20 print:hidden"
           title="Arbeitsblatt löschen"
         />
       )}
 
-      {/* A4 sheet container */}
+      {/* A4 sheet container - Ist jetzt die Dropzone */}
       <div
+        ref={setDroppableNodeRef}
         className={`bg-white shadow-md print:shadow-none rounded-md w-[210mm] h-[297mm] mx-auto relative overflow-hidden print:overflow-visible print:page-break-inside-avoid ${className}`}
-        style={{
-          padding: `${PAGE_SETTINGS.marginTop} ${PAGE_SETTINGS.marginRight} ${PAGE_SETTINGS.marginBottom} ${PAGE_SETTINGS.marginLeft}`,
-        }}
       >
+        {/* Fabric.js Canvas (liegt ÜBER dem Editor) */}
+        <canvas
+          ref={canvasRef}
+          className="absolute top-0 left-0 pointer-events-auto"
+          style={{
+            zIndex: 10,
+            border: "1px dashed blue", // Debug-Rahmen zum Sehen der Canvas-Grenzen
+          }}
+        />
+
+        {/* Tiptap Editor Bereich (nimmt volle Größe ein, liegt unter Canvas) */}
         {editor ? (
-          <div className="editor-container w-full h-full">
-            <EditorContent editor={editor} />
+          <div style={dropzoneStyle} className="editor-container w-full h-full">
+            <EditorContent
+              editor={editor}
+              style={{
+                paddingTop: PAGE_SETTINGS.marginTop,
+                paddingRight: PAGE_SETTINGS.marginRight,
+                paddingBottom: PAGE_SETTINGS.marginBottom,
+                paddingLeft: PAGE_SETTINGS.marginLeft,
+                height: "100%",
+              }}
+            />
             {editor && <TableControls editor={editor} />}
             {/* Overflow warning */}
             {isSheetFull && (
-              <div className="absolute bottom-0 left-0 right-0 bg-yellow-100 text-yellow-800 p-2 text-sm text-center print:hidden">
-                Das Arbeitsblatt ist voll. Es kann kein weiterer Inhalt
-                hinzugefügt werden.
+              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-yellow-100 text-yellow-800 p-2 text-sm text-center print:hidden z-20 rounded-md shadow">
+                Arbeitsblatt ist voll.
               </div>
             )}
           </div>
         ) : (
-          <div
-            contentEditable={true}
-            className="w-full h-full outline-none"
-            style={{
-              lineHeight: PAGE_SETTINGS.lineHeight,
-              fontSize: PAGE_SETTINGS.fontSize,
-              fontFamily: PAGE_SETTINGS.fontFamily,
-            }}
-          >
-            <h1 className="text-2xl font-bold mb-6">{sheet.content.title}</h1>
-            <p>{sheet.content.body}</p>
+          <div style={dropzoneStyle} className="w-full h-full outline-none">
+            <div
+              className="p-4"
+              style={{
+                paddingTop: PAGE_SETTINGS.marginTop,
+                paddingRight: PAGE_SETTINGS.marginRight,
+                paddingBottom: PAGE_SETTINGS.marginBottom,
+                paddingLeft: PAGE_SETTINGS.marginLeft,
+              }}
+            >
+              <h1 className="text-2xl font-bold mb-6">{sheet.content.title}</h1>
+              <p>{sheet.content.body}</p>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Add button after the last worksheet */}
+      {/* Add button */}
       {isLast && (
-        <div className="flex justify-center mt-6 mb-2">
+        <div className="flex justify-center mt-6 mb-2 print:hidden">
           <ButtonAddRounded
             onClick={onAdd}
             size="lg"
@@ -326,6 +411,8 @@ const LayoutWorkSheet: React.FC<LayoutWorkSheetProps> = ({
   className = "",
   onPrint,
   onEditorMount,
+  dropTargetInfo,
+  onShapeDropped,
 }) => {
   // State for multiple worksheets
   const [worksheets, setWorksheets] = useState<WorksheetData[]>([
@@ -443,6 +530,8 @@ const LayoutWorkSheet: React.FC<LayoutWorkSheetProps> = ({
             onDelete={deleteWorksheet}
             onAdd={addNewWorksheet}
             onEditorMount={handleEditorMount}
+            dropTargetInfo={dropTargetInfo}
+            onShapeDropped={onShapeDropped}
           />
         ))}
       </div>

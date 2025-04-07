@@ -26,7 +26,13 @@ const TableControls: React.FC<TableControlsProps> = ({ editor }) => {
     tippyOptions: { duration: 100, placement: "top-start" as const },
     // Zeige das Menü nur an, wenn der Cursor in einer Tabelle ist
     // und es keine Node-Auswahl ist (wie z.B. ein ausgewähltes Bild)
-    shouldShow: ({ editor, state }: { editor: Editor; state: { selection: unknown } }) => {
+    shouldShow: ({
+      editor,
+      state,
+    }: {
+      editor: Editor;
+      state: { selection: unknown };
+    }) => {
       const { selection } = state;
       return editor.isActive("table") && !isNodeSelection(selection);
     },

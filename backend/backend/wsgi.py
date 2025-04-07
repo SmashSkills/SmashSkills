@@ -1,9 +1,9 @@
 """
-WSGI config for backend project.
+WSGI-Konfiguration für das Backend-Projekt.
 
-It exposes the WSGI callable as a module-level variable named ``application``.
+Es stellt das WSGI-aufrufbare Objekt als Modul-Level-Variable namens ``application`` bereit.
 
-For more information on this file, see
+Weitere Informationen zu dieser Datei finden Sie unter:
 https://docs.djangoproject.com/en/5.1/howto/deployment/wsgi/
 """
 

@@ -1,6 +1,10 @@
 {
   "dependencies": {
+    "@tldraw/tldraw": "^3.11.1",
     "@types/react-rnd": "^7.4.4",
+    "framer-motion": "^12.7.3",
+    "konva": "^9.3.20",
+    "react-konva": "^19.0.3",
     "react-rnd": "^10.5.2"
   }
 }

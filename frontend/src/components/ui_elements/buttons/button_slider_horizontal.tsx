@@ -89,7 +89,7 @@ const ButtonSliderHorizontal: React.FC<ButtonSliderHorizontalProps> = ({
     <div
       ref={containerRef}
       className={cn(
-        "relative flex w-full  bg-gray-100 rounded-md p-1 shadow-inner gap-1", // Ähnlich wie Toolbar-Gruppen
+        "relative flex w-full bg-gray-100 rounded-md p-1 shadow-inner gap-2 items-center",
         className
       )}
     >
@@ -116,7 +116,7 @@ const ButtonSliderHorizontal: React.FC<ButtonSliderHorizontalProps> = ({
           }} // Korrekte Zuweisung im Ref-Callback
           onClick={() => onValueChange(option.id)}
           className={cn(
-            "relative z-10 flex-1 py-1.5 px-2 text-center text-sm transition-colors duration-300 ease-in-out rounded cursor-pointer", // Basis-Button-Styling
+            "relative z-10 flex-1 py-1.5 px-2 text-center text-sm transition-colors duration-300 ease-in-out rounded cursor-pointer flex items-center justify-center", // flex, items-center und justify-center hinzugefügt
             selectedValue === option.id
               ? "text-white font-medium" // Ausgewählter Text (über dem Highlight)
               : "text-gray-600 hover:text-gray-900 hover:font-bold transition-all duration-300", // Nicht ausgewählter Text

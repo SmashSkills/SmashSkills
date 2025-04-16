@@ -38,7 +38,6 @@ const ButtonSliderVertical: React.FC<ButtonSliderVerticalProps> = ({
   highlightClassName = "",
   iconSize = 20,
   showLabels = true,
-  iconPosition = "top",
 }) => {
   const [highlightStyle, setHighlightStyle] = useState<{
     top: number;
@@ -111,37 +110,13 @@ const ButtonSliderVertical: React.FC<ButtonSliderVerticalProps> = ({
     gridStyle.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
   }
 
-  // Bestimme die Flex-Ausrichtung basierend auf iconPosition
-  const getButtonContentStyle = (): React.CSSProperties => {
-    switch (iconPosition) {
-      case "top":
-        return {
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-        };
-      case "left":
-        return {
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "flex-start",
-          gap: "0.5rem",
-        };
-      case "center":
-      default:
-        return {
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-        };
-    }
-  };
+
 
   return (
     <div
       ref={containerRef}
       className={cn(
-        "relative grid w-full bg-gray-100  rounded-md p-1 shadow-inner gap-1", // Grid-Layout
+        "relative grid w-full bg-gray-100 rounded-md p-1 shadow-inner gap-1",
         className
       )}
       style={gridStyle}
@@ -150,7 +125,7 @@ const ButtonSliderVertical: React.FC<ButtonSliderVerticalProps> = ({
       {highlightStyle.width > 0 && highlightStyle.height > 0 && (
         <div
           className={cn(
-            "absolute bg-primary rounded shadow-sm transition-all duration-300 ease-in-out border border-gray-200", // Styling Highlight
+            "absolute bg-primary rounded shadow-sm transition-all duration-300 ease-in-out border border-gray-200",
             highlightClassName
           )}
           style={{
@@ -158,7 +133,7 @@ const ButtonSliderVertical: React.FC<ButtonSliderVerticalProps> = ({
             left: `${highlightStyle.left}px`,
             width: `${highlightStyle.width}px`,
             height: `${highlightStyle.height}px`,
-            zIndex: 1, // Damit das Highlight hinter dem Button liegt
+            zIndex: 1,
           }}
         />
       )}
@@ -172,21 +147,24 @@ const ButtonSliderVertical: React.FC<ButtonSliderVerticalProps> = ({
           }}
           onClick={() => onValueChange(option.id)}
           className={cn(
-            "relative z-10 w-full py-1.5 px-2 text-center text-sm transition-colors duration-300 ease-in-out rounded flex items-center justify-center cursor-pointer", // Basis-Button-Styling
+            "relative z-10 w-full py-1.5 text-center text-sm transition-colors duration-300 ease-in-out rounded flex flex-col items-center justify-center cursor-pointer", // Flex-Col + Zentrierung
             selectedValue === option.id
-              ? "text-white font-medium" // Ausgewählter Text
-              : "text-gray-600 hover:text-gray-900 hover:font-bold transition-all duration-300", // Nicht ausgewählter Text
+              ? "text-white font-medium"
+              : "text-gray-600 hover:text-gray-900 hover:font-bold transition-all duration-300",
             buttonClassName
           )}
-          title={option.label} // Tooltip
-          style={getButtonContentStyle() as React.CSSProperties}
+          title={option.label}
         >
           {/* Icon oder SVG anzeigen */}
-          {option.icon && <div className="flex-shrink-0">{option.icon}</div>}
+          {option.icon && (
+            <div className="flex-shrink-0 flex items-center justify-center">
+              {option.icon}
+            </div>
+          )}
 
           {/* SVG-Inhalt, falls vorhanden */}
           {option.svgContent && (
-            <div className="flex items-center justify-center mb-1">
+            <div className="flex items-center justify-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width={iconSize}
@@ -205,7 +183,9 @@ const ButtonSliderVertical: React.FC<ButtonSliderVerticalProps> = ({
 
           {/* Label anzeigen, wenn showLabels true ist */}
           {showLabels && (
-            <span className={option.svgContent ? "text-xs mt-1" : ""}>
+            <span className="mt-1 text-center w-full">
+              {" "}
+              {/* Zentrierter Text */}
               {option.label}
             </span>
           )}

@@ -1,11 +1,19 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState, useRef, useEffect } from "react";
 import { Editor, track } from "@tldraw/tldraw";
+import {
+  SheetGuideManager,
+  SheetGuideFormat,
+  SheetGuideSettings,
+} from "../utils/GuidesSheetUtil";
 
 interface CustomToolbarProps {
   editor: Editor;
   toggleDrawPopUp: () => void;
   toggleShapeSettings: () => void;
   toggleTextSettings: () => void;
+  toggleSnapping: () => void;
+  snappingEnabled: boolean;
+  sheetGuideManager?: SheetGuideManager | null;
 }
 
 // Mit track wrappen, um auf Editor-Zustandsänderungen zu reagieren
@@ -15,9 +23,51 @@ const CustomToolbar = track(
     toggleDrawPopUp,
     toggleShapeSettings,
     toggleTextSettings,
+    toggleSnapping,
+    snappingEnabled,
+    sheetGuideManager,
   }: CustomToolbarProps) => {
     // State für aktives Tool - dank track wird das UI automatisch aktualisiert
     const activeTool = editor.getCurrentToolId();
+
+    // State für Sheet-Guide-Dropdown
+    const [showGuideDropdown, setShowGuideDropdown] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Lokaler State für die Einstellungen
+    const [guideSettings, setGuideSettings] = useState<SheetGuideSettings>(() =>
+      sheetGuideManager
+        ? sheetGuideManager.getSettings()
+        : {
+            enabled: false,
+            showMargins: false,
+            showCenterLines: false,
+            currentFormat: {
+              name: "Standard",
+              marginTop: 40,
+              marginRight: 40,
+              marginBottom: 40,
+              marginLeft: 40,
+              showCenterLines: true,
+            },
+            formats: [],
+          }
+    );
+
+    // Abonniere Änderungen im SheetGuideManager
+    useEffect(() => {
+      if (!sheetGuideManager) return;
+
+      // Aktualisiere den lokalen State mit den aktuellen Einstellungen
+      setGuideSettings({ ...sheetGuideManager.getSettings() });
+
+      // Abonniere Änderungen
+      const unsubscribe = sheetGuideManager.subscribe(() => {
+        setGuideSettings({ ...sheetGuideManager.getSettings() });
+      });
+
+      return unsubscribe;
+    }, [sheetGuideManager]);
 
     // Funktion zum Umschalten des Werkzeugs
     const selectTool = useCallback(
@@ -26,6 +76,23 @@ const CustomToolbar = track(
       },
       [editor]
     );
+
+    // Schließe das Dropdown bei Klick außerhalb
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (
+          dropdownRef.current &&
+          !dropdownRef.current.contains(event.target as Node)
+        ) {
+          setShowGuideDropdown(false);
+        }
+      };
+
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }, []);
 
     // Stil für aktiven Button
     const getButtonStyle = (toolId: string) => {
@@ -54,6 +121,74 @@ const CustomToolbar = track(
 
       return `${baseClasses} hover:bg-blue-100 text-blue-900`;
     };
+
+    // Stil für den Snapping-Button
+    const getSnappingButtonStyle = () => {
+      const baseClasses =
+        "tool-btn w-8 h-8 flex items-center justify-center rounded";
+
+      if (snappingEnabled) {
+        return `${baseClasses} bg-orange-100 text-[#ff5722]`;
+      }
+
+      return `${baseClasses} hover:bg-blue-100 text-blue-900`;
+    };
+
+    // Stil für den Sheet-Guide-Button
+    const getSheetGuideButtonStyle = () => {
+      const baseClasses =
+        "tool-btn w-8 h-8 flex items-center justify-center rounded";
+
+      if (guideSettings.enabled) {
+        return `${baseClasses} bg-orange-100 text-[#ff5722]`;
+      }
+
+      return `${baseClasses} hover:bg-blue-100 text-blue-900`;
+    };
+
+    // Toggle Sheet-Guide
+    const toggleSheetGuide = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (sheetGuideManager) {
+        sheetGuideManager.toggleEnabled();
+        // State wird über das Abonnement aktualisiert
+      }
+    };
+
+    // Toggle Sheet-Guide-Dropdown
+    const toggleGuideDropdown = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setShowGuideDropdown(!showGuideDropdown);
+    };
+
+    // Format ändern
+    const changeFormat = (formatName: string) => {
+      if (sheetGuideManager) {
+        sheetGuideManager.setFormat(formatName);
+        // State wird über das Abonnement aktualisiert
+      }
+    };
+
+    // Toggle Margins
+    const toggleMargins = () => {
+      if (sheetGuideManager) {
+        sheetGuideManager.toggleMargins();
+        // State wird über das Abonnement aktualisiert
+      }
+    };
+
+    // Toggle Center Lines
+    const toggleCenterLines = () => {
+      if (sheetGuideManager) {
+        sheetGuideManager.toggleCenterLines();
+        // State wird über das Abonnement aktualisiert
+      }
+    };
+
+    // Sheet-Guides und Snapping-Funktionalität - ENTFERNT KOPPLUNG
+    const handleSnapping = useCallback(() => {
+      toggleSnapping();
+    }, [toggleSnapping]); // Nur toggleSnapping als Abhängigkeit
 
     return (
       <div className="custom-toolbar flex items-center gap-2 bg-white p-1 rounded-md">
@@ -250,6 +385,159 @@ const CustomToolbar = track(
             <path d="M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7"></path>
           </svg>
         </button>
+
+        <div className="border-l border-gray-300 h-6 mx-1"></div>
+
+        {/* Snapping Button */}
+        <button
+          className={getSnappingButtonStyle()}
+          onClick={handleSnapping}
+          title="Hilfslinien & Snapping"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M3 3h18v18H3z"></path>
+            <path d="M11 3v18"></path>
+            <path d="M3 11h18"></path>
+          </svg>
+        </button>
+
+        {/* Sheet-Guides Button mit Dropdown */}
+        <div className="relative">
+          <button
+            className={getSheetGuideButtonStyle()}
+            onClick={toggleGuideDropdown}
+            title="Sheet-Hilfslinien"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="3" y1="9" x2="21" y2="9"></line>
+              <line x1="3" y1="15" x2="21" y2="15"></line>
+              <line x1="9" y1="3" x2="9" y2="21"></line>
+              <line x1="15" y1="3" x2="15" y2="21"></line>
+            </svg>
+          </button>
+
+          {/* Dropdown-Menü */}
+          {showGuideDropdown && sheetGuideManager && (
+            <div
+              ref={dropdownRef}
+              className="absolute top-full right-0 mt-1 bg-white shadow-lg rounded-md p-3 z-50 min-w-[200px]"
+            >
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-sm font-bold text-gray-900">
+                  Sheet-Hilfslinien
+                </h3>
+                <button
+                  className="text-xs text-blue-600 hover:text-blue-800"
+                  onClick={toggleSheetGuide}
+                >
+                  {guideSettings.enabled ? "Ausschalten" : "Einschalten"}
+                </button>
+              </div>
+
+              {/* Optionen */}
+              <div className="mb-3">
+                <div className="flex items-center mb-2">
+                  <input
+                    type="checkbox"
+                    id="showMargins"
+                    checked={guideSettings.showMargins}
+                    onChange={toggleMargins}
+                    className="mr-2"
+                  />
+                  <label
+                    htmlFor="showMargins"
+                    className="text-sm text-gray-700"
+                  >
+                    Seitenränder anzeigen
+                  </label>
+                </div>
+                <div className="flex items-center mb-2">
+                  <input
+                    type="checkbox"
+                    id="showCenterLines"
+                    checked={guideSettings.showCenterLines}
+                    onChange={toggleCenterLines}
+                    className="mr-2"
+                  />
+                  <label
+                    htmlFor="showCenterLines"
+                    className="text-sm text-gray-700"
+                  >
+                    Mittelpunktlinien anzeigen
+                  </label>
+                </div>
+              </div>
+
+              {/* Format-Auswahl */}
+              <h4 className="text-xs font-bold text-gray-700 mb-1">Format</h4>
+              <div className="mb-2">
+                <select
+                  value={guideSettings.currentFormat.name}
+                  onChange={(e) => changeFormat(e.target.value)}
+                  className="w-full p-1 border border-gray-300 rounded text-sm"
+                >
+                  {guideSettings.formats.map((format: SheetGuideFormat) => (
+                    <option key={format.name} value={format.name}>
+                      {format.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Format-Details */}
+              <div className="text-xs text-gray-500">
+                {guideSettings.formats.find(
+                  (f: SheetGuideFormat) =>
+                    f.name === guideSettings.currentFormat.name
+                ) && (
+                  <div>
+                    <div>
+                      Ränder: O:
+                      {guideSettings.currentFormat.marginTop}
+                      px
+                    </div>
+                    <div>
+                      R:
+                      {guideSettings.currentFormat.marginRight}
+                      px
+                    </div>
+                    <div>
+                      U:
+                      {guideSettings.currentFormat.marginBottom}
+                      px
+                    </div>
+                    <div>
+                      L:
+                      {guideSettings.currentFormat.marginLeft}
+                      px
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   }

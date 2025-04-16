@@ -43,10 +43,10 @@ const COLOR_PALETTE: { id: string; label: string; hex: string }[] = [
 
 // Stiftgrößen - Bereit für den Slider
 const SIZES = [
-  { id: "s", label: "S", value: 2 },
-  { id: "m", label: "M", value: 4 },
-  { id: "l", label: "L", value: 6 },
-  { id: "xl", label: "XL", value: 8 },
+  { id: "s", label: "Dünn", value: 2 },
+  { id: "m", label: "Mittel", value: 4 },
+  { id: "l", label: "Stark", value: 6 },
+  { id: "xl", label: "Dick", value: 8 },
 ];
 
 // Strichstile - Bereit für den vertikalen Slider

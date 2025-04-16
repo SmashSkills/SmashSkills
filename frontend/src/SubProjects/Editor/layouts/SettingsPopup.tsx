@@ -50,18 +50,20 @@ const SettingsPopup: React.FC<SettingsPopupProps> = ({
 
   return (
     <motion.div
-      className={`bg-white w-full max-w-xs flex flex-col ${className}`}
+      className={`bg-white w-full flex flex-col ${className}`}
       style={{
         ...style,
-        maxHeight: "100vh", // Maximale Höhe ist Bildschirmhöhe
-        height: "100%", // Füllt den verfügbaren Platz
+        maxHeight: "100vh",
+        height: "100%",
       }}
       variants={containerVariants}
       initial="hidden"
       animate="visible"
+      layout
+      transition={{ type: "spring", damping: 25, stiffness: 200 }}
     >
       {/* Scrollbarer Inhaltsbereich */}
-      <motion.div className="overflow-y-auto flex-1 max-h-full">
+      <motion.div className="overflow-y-auto flex-1 max-h-full" layout>
         <AnimatePresence mode="wait">
           {activeTab === "draw" && (
             <motion.div

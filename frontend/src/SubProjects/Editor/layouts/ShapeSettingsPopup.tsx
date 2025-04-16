@@ -135,20 +135,20 @@ const FORM_SIZE_CATEGORIES = [
   { id: "small", label: "Klein", width: 80, height: 80 },
   { id: "medium", label: "Mittel", width: 120, height: 120 },
   { id: "large", label: "Groß", width: 160, height: 160 },
-  { id: "xlarge", label: "Sehr groß", width: 200, height: 200 },
+  { id: "xlarge", label: "Riesig", width: 200, height: 200 },
 ];
 
 // Konturstärke - entspricht size in tldraw
 const STROKE_WIDTHS = [
   { id: "s", label: "Dünn", value: "s" },
   { id: "m", label: "Mittel", value: "m" },
-  { id: "l", label: "Dick", value: "l" },
-  { id: "xl", label: "Sehr dick", value: "xl" },
+  { id: "l", label: "Stark", value: "l" },
+  { id: "xl", label: "Dick", value: "xl" },
 ];
 
 // Füllstile
 const FILL_STYLES = [
-  { id: "none", label: "Keine Füllung", value: "none" },
+  { id: "none", label: "Keine", value: "none" },
   { id: "solid", label: "Halbtransparent", value: "solid" },
   { id: "semi", label: "Gefüllt", value: "semi" },
 ];
@@ -515,7 +515,7 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
     value: width.value,
   }));
 
-  // Konvertiere FILL_STYLES für ButtonSliderVertical-Komponente
+  // Konvertiere FILL_STYLES für ButtonSliderHorizontal-Komponente
   const fillStyleOptions = FILL_STYLES.map((style) => ({
     id: style.id,
     label: style.label,
@@ -523,7 +523,7 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
     icon: null,
   }));
 
-  // Konvertiere LINE_STYLES für ButtonSliderVertical-Komponente
+  // Konvertiere LINE_STYLES für ButtonSliderHorizontal-Komponente
   const lineStyleOptions = LINE_STYLES.map((style) => ({
     id: style.id,
     label: style.label,
@@ -540,7 +540,7 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
 
   return (
     <div
-      className="bg-white p-4 flex flex-col gap-5 w-full max-w-xs pb-28"
+      className="bg-white p-4 flex flex-col gap-5 w-full pb-28"
       onPointerDown={(e) => e.stopPropagation()}
     >
       {/* Titel */}
@@ -574,7 +574,7 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
             showLabels={true}
             iconPosition="top"
             className="bg-gray-100 border border-gray-200"
-            buttonClassName="p-2 flex flex-col hover:bg-gray-50"
+            buttonClassName="flex flex-col"
             highlightClassName="bg-orange-100 border-orange-300"
           />
         </div>
@@ -645,27 +645,31 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
           />
         </div>
 
-        {/* Füllstil mit ButtonSliderVertical */}
+        {/* Füllstil mit ButtonSliderHorizontal */}
         <div className="flex flex-col gap-1">
           <label className="text-xs text-gray-500 font-medium">Füllung</label>
-          <ButtonSliderVertical
+          <ButtonSliderHorizontal
             options={fillStyleOptions}
             selectedValue={selectedFillStyle}
             onValueChange={handleFillStyleChange}
-            columns={3}
+            className="bg-gray-100 border border-gray-200"
+            buttonClassName="flex flex-col"
+            highlightClassName="bg-orange-100 border-orange-300"
           />
         </div>
 
-        {/* Linienstil mit ButtonSliderVertical */}
+        {/* Linienstil mit ButtonSliderHorizontal */}
         <div className="flex flex-col gap-1">
           <label className="text-xs text-gray-500 font-medium">
             Linienstil
           </label>
-          <ButtonSliderVertical
+          <ButtonSliderHorizontal
             options={lineStyleOptions}
             selectedValue={selectedLineStyle}
             onValueChange={handleLineStyleChange}
-            columns={3}
+            className="bg-gray-100 border border-gray-200"
+            buttonClassName="flex flex-col"
+            highlightClassName="bg-orange-100 border-orange-300"
           />
         </div>
       </div>

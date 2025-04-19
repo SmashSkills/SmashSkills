@@ -5,6 +5,8 @@ import {
   SheetGuideFormat,
   SheetGuideSettings,
 } from "../utils/GuidesSheetUtil";
+import { UserImportedImageShape } from "../components/custom-shapes/UserImportedShapeutil";
+import { SettingsType } from "./SettingsPopup";
 
 interface CustomToolbarProps {
   editor: Editor;
@@ -14,6 +16,8 @@ interface CustomToolbarProps {
   toggleSnapping: () => void;
   snappingEnabled: boolean;
   sheetGuideManager?: SheetGuideManager | null;
+  toggleLayerSettings: () => void;
+  activeSidebar: SettingsType | null;
 }
 
 // Mit track wrappen, um auf Editor-Zustandsänderungen zu reagieren
@@ -26,6 +30,8 @@ const CustomToolbar = track(
     toggleSnapping,
     snappingEnabled,
     sheetGuideManager,
+    toggleLayerSettings,
+    activeSidebar,
   }: CustomToolbarProps) => {
     // State für aktives Tool - dank track wird das UI automatisch aktualisiert
     const activeTool = editor.getCurrentToolId();
@@ -33,6 +39,7 @@ const CustomToolbar = track(
     // State für Sheet-Guide-Dropdown
     const [showGuideDropdown, setShowGuideDropdown] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Lokaler State für die Einstellungen
     const [guideSettings, setGuideSettings] = useState<SheetGuideSettings>(() =>
@@ -106,16 +113,12 @@ const CustomToolbar = track(
       return `${baseClasses} hover:bg-blue-100 text-blue-900`;
     };
 
-    // Stil für aktiven Formen-Button
+    // Stil für aktiven Formen-Button (jetzt nur noch custom-geo)
     const getShapeButtonStyle = () => {
       const baseClasses =
         "tool-btn w-8 h-8 flex items-center justify-center rounded";
 
-      if (
-        activeTool === "geo" ||
-        activeTool === "line" ||
-        activeTool === "arrow"
-      ) {
+      if (activeSidebar === "shape") {
         return `${baseClasses} bg-orange-100 text-[#ff5722]`;
       }
 
@@ -146,12 +149,21 @@ const CustomToolbar = track(
       return `${baseClasses} hover:bg-blue-100 text-blue-900`;
     };
 
+    // Stil für den Layer-Button
+    const getLayerButtonStyle = () => {
+      const baseClasses =
+        "tool-btn w-8 h-8 flex items-center justify-center rounded";
+      if (activeSidebar === "layer") {
+        return `${baseClasses} bg-orange-100 text-[#ff5722]`;
+      }
+      return `${baseClasses} hover:bg-blue-100 text-blue-900`;
+    };
+
     // Toggle Sheet-Guide
     const toggleSheetGuide = (e: React.MouseEvent) => {
       e.stopPropagation();
       if (sheetGuideManager) {
         sheetGuideManager.toggleEnabled();
-        // State wird über das Abonnement aktualisiert
       }
     };
 
@@ -165,7 +177,6 @@ const CustomToolbar = track(
     const changeFormat = (formatName: string) => {
       if (sheetGuideManager) {
         sheetGuideManager.setFormat(formatName);
-        // State wird über das Abonnement aktualisiert
       }
     };
 
@@ -173,7 +184,6 @@ const CustomToolbar = track(
     const toggleMargins = () => {
       if (sheetGuideManager) {
         sheetGuideManager.toggleMargins();
-        // State wird über das Abonnement aktualisiert
       }
     };
 
@@ -181,14 +191,82 @@ const CustomToolbar = track(
     const toggleCenterLines = () => {
       if (sheetGuideManager) {
         sheetGuideManager.toggleCenterLines();
-        // State wird über das Abonnement aktualisiert
       }
     };
 
-    // Sheet-Guides und Snapping-Funktionalität - ENTFERNT KOPPLUNG
+    // Sheet-Guides und Snapping-Funktionalität
     const handleSnapping = useCallback(() => {
       toggleSnapping();
-    }, [toggleSnapping]); // Nur toggleSnapping als Abhängigkeit
+    }, [toggleSnapping]);
+
+    // Funktion zum Auslösen des File Inputs
+    const handleImportClick = useCallback(() => {
+      fileInputRef.current?.click();
+    }, []);
+
+    // Funktion, die auf Datei-Auswahl reagiert
+    const handleFileChange = useCallback(
+      (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file || !editor) return;
+
+        const reader = new FileReader();
+
+        reader.onload = (loadEvent) => {
+          const dataUrl = loadEvent.target?.result as string;
+          if (!dataUrl) return;
+
+          // Lade Bild, um natürliche Dimensionen zu erhalten
+          const img = new Image();
+          img.onload = () => {
+            const { naturalWidth, naturalHeight } = img;
+            const MAX_DIMENSION = 300; // Maximale Größe auf dem Canvas
+
+            let w = naturalWidth;
+            let h = naturalHeight;
+
+            // Skaliere herunter, wenn zu groß
+            if (w > MAX_DIMENSION || h > MAX_DIMENSION) {
+              const scale = Math.min(MAX_DIMENSION / w, MAX_DIMENSION / h);
+              w = Math.round(w * scale);
+              h = Math.round(h * scale);
+            }
+
+            // Shape im Zentrum des Viewports erstellen
+            const center = editor.getViewportScreenCenter();
+            editor.createShape<UserImportedImageShape>({
+              type: "user-image",
+              x: center.x - w / 2,
+              y: center.y - h / 2,
+              props: {
+                w: w,
+                h: h,
+                url: dataUrl,
+              },
+            });
+            editor.setCurrentTool("select"); // Nach Erstellung auswählen?
+          };
+          img.onerror = () => {
+            console.error(
+              "Fehler beim Laden des Bildes für Dimensionsprüfung."
+            );
+            // Hier könnte man ein Fehler-Feedback geben
+          };
+          img.src = dataUrl;
+        };
+
+        reader.onerror = () => {
+          console.error("Fehler beim Lesen der Datei.");
+          // Hier könnte man ein Fehler-Feedback geben
+        };
+
+        reader.readAsDataURL(file);
+
+        // Input zurücksetzen, damit die gleiche Datei erneut gewählt werden kann
+        event.target.value = "";
+      },
+      [editor]
+    );
 
     return (
       <div className="custom-toolbar flex items-center gap-2 bg-white p-1 rounded-md">
@@ -246,11 +324,7 @@ const CustomToolbar = track(
           onClick={() => {
             // Auswahl aufheben, damit keine Elemente unbeabsichtigt geändert werden
             editor.selectNone();
-            // Aktiviere das Form-Tool (wenn nicht schon aktiv)
-            if (activeTool !== "geo") {
-              editor.setCurrentTool("geo", { shapeType: "rectangle" });
-            }
-            // Öffne die Formeinstellungen
+            // Öffne nur die Formeinstellungen
             toggleShapeSettings();
           }}
           title="Formen"
@@ -299,6 +373,36 @@ const CustomToolbar = track(
         </button>
 
         <div className="border-l border-gray-300 h-6 mx-1"></div>
+
+        <button
+          className="tool-btn w-8 h-8 flex items-center justify-center rounded hover:bg-blue-100 text-blue-900"
+          onClick={handleImportClick}
+          title="Bild importieren"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <path d="M21 15l-5-5L5 21" />
+          </svg>
+        </button>
+
+        <input
+          type="file"
+          ref={fileInputRef}
+          style={{ display: "none" }}
+          accept="image/png, image/jpeg, image/svg+xml"
+          onChange={handleFileChange}
+        />
 
         <button
           className={getButtonStyle("eraser")}
@@ -388,7 +492,30 @@ const CustomToolbar = track(
 
         <div className="border-l border-gray-300 h-6 mx-1"></div>
 
-        {/* Snapping Button */}
+        <button
+          className={getLayerButtonStyle()}
+          onClick={toggleLayerSettings}
+          title="Objekte anzeigen"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </button>
+
+        <div className="border-l border-gray-300 h-6 mx-1"></div>
+
         <button
           className={getSnappingButtonStyle()}
           onClick={handleSnapping}

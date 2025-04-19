@@ -5,6 +5,7 @@ import {
   DefaultFontStyle,
   DefaultSizeStyle,
   DefaultTextAlignStyle,
+  type TLTextShape,
 } from "@tldraw/tldraw";
 import ButtonSliderHorizontal from "../../../components/ui_elements/buttons/button_slider_horizontal";
 import ButtonSliderVertical from "../../../components/ui_elements/buttons/button_slider_vertical";
@@ -68,55 +69,44 @@ const TextSettingsPopup: React.FC<TextSettingsPopupProps> = ({
   const [selectedFontSize, setSelectedFontSize] = useState("m");
   const [selectedTextAlign, setSelectedTextAlign] = useState("middle");
 
-  // Lade aktuelle Einstellungen aus dem Editor
+  // Lade aktuelle Einstellungen aus dem Editor oder ausgewähltem Text-Shape
   useEffect(() => {
     if (editor && isVisible) {
-      // Farbe abrufen
-      const currentColor = editor.getStyleForNextShape(DefaultColorStyle);
-      if (currentColor) {
-        setSelectedColor(currentColor as string);
+      // Lese globale Defaults für den Fallback
+      const styles = editor.getInstanceState().stylesForNextShape;
+      const defaultColor = (styles[DefaultColorStyle.id] as string) || "black";
+      const defaultFont = (styles[DefaultFontStyle.id] as string) || "sans";
+      const defaultSize = (styles[DefaultSizeStyle.id] as string) || "m";
+      const defaultAlign = (styles[DefaultTextAlignStyle.id] as string) || "middle";
+
+      // Prüfe die aktuelle Auswahl
+      const selectedShapes = editor.getSelectedShapes();
+
+      if (selectedShapes.length === 1 && selectedShapes[0].type === 'text') {
+        // Wenn genau ein Text-Shape ausgewählt ist, dessen Styles nehmen
+        const textShape = selectedShapes[0] as TLTextShape;
+        const props = textShape.props;
+
+        setSelectedColor(props.color || defaultColor);
+        setSelectedFontFamily(props.font || defaultFont);
+        setSelectedFontSize(props.size || defaultSize);
+        // Versuche erneut, align direkt aus props zu lesen
+
+
+        // FontStyle (italic) bleibt vorerst unberücksichtigt
+        setSelectedFontStyle("normal");
+
+      } else {
+        // Wenn nichts oder mehrere/falsche Shapes ausgewählt sind, globale Defaults verwenden
+        setSelectedColor(defaultColor);
+        setSelectedFontFamily(defaultFont);
+        setSelectedFontSize(defaultSize);
+        setSelectedTextAlign(defaultAlign);
+        setSelectedFontStyle("normal");
       }
-
-      // Schriftart abrufen - Wir verwenden DefaultFontStyle für die Schriftfamilie auch
-      const currentFontFamily = editor.getStyleForNextShape(DefaultFontStyle);
-      if (currentFontFamily) {
-        setSelectedFontFamily(currentFontFamily as string);
-      }
-
-      // Schriftgröße abrufen
-      const currentFontSize = editor.getStyleForNextShape(DefaultSizeStyle);
-      if (currentFontSize) {
-        setSelectedFontSize(currentFontSize as string);
-      }
-
-      // Textausrichtung abrufen
-      const currentTextAlign = editor.getStyleForNextShape(
-        DefaultTextAlignStyle
-      );
-      if (currentTextAlign) {
-        setSelectedTextAlign(currentTextAlign as string);
-      }
-
-      // Funktion zur Aktualisierung der Werte bei Änderungen
-      const intervalId = setInterval(() => {
-        const colorStyle = editor.getStyleForNextShape(DefaultColorStyle);
-        if (colorStyle) setSelectedColor(colorStyle as string);
-
-        const fontStyle = editor.getStyleForNextShape(DefaultFontStyle);
-        if (fontStyle) setSelectedFontFamily(fontStyle as string);
-
-        const sizeStyle = editor.getStyleForNextShape(DefaultSizeStyle);
-        if (sizeStyle) setSelectedFontSize(sizeStyle as string);
-
-        const alignStyle = editor.getStyleForNextShape(DefaultTextAlignStyle);
-        if (alignStyle) setSelectedTextAlign(alignStyle as string);
-      }, 100);
-
-      return () => {
-        clearInterval(intervalId);
-      };
     }
-  }, [editor, isVisible]);
+    // Abhängigkeit von ausgewählten IDs hinzufügen
+  }, [editor, isVisible, editor?.getSelectedShapeIds().join(',')]);
 
   // Änderungshandler für Farbe
   const handleColorChange = useCallback(
@@ -124,20 +114,20 @@ const TextSettingsPopup: React.FC<TextSettingsPopupProps> = ({
       setSelectedColor(color);
       editor.setStyleForNextShapes(DefaultColorStyle, color);
 
-      // Aktualisiere den Stil der ausgewählten Texte
+      // Aktualisiere ausgewählte Text-Shapes
       const selectedShapes = editor.getSelectedShapeIds();
       if (selectedShapes.length > 0) {
-        editor.updateShapes(
-          selectedShapes.map((id) => {
-            return {
-              id,
-              type: "text",
-              props: {
-                color,
-              },
-            };
-          })
-        );
+        const updates = selectedShapes
+          .map((id) => editor.getShape(id))
+          .filter(shape => shape?.type === 'text') // Nur Text-Shapes
+          .map(shape => ({
+            id: shape!.id,
+            type: 'text' as const,
+            props: { color },
+          }));
+        if (updates.length > 0) {
+          editor.updateShapes(updates);
+        }
       }
     },
     [editor]
@@ -149,45 +139,20 @@ const TextSettingsPopup: React.FC<TextSettingsPopupProps> = ({
       setSelectedFontFamily(fontFamily);
       editor.setStyleForNextShapes(DefaultFontStyle, fontFamily);
 
-      // Aktualisiere den Stil der ausgewählten Texte
+      // Aktualisiere ausgewählte Text-Shapes
       const selectedShapes = editor.getSelectedShapeIds();
       if (selectedShapes.length > 0) {
-        editor.updateShapes(
-          selectedShapes.map((id) => {
-            return {
-              id,
-              type: "text",
-              props: {
-                font: fontFamily,
-              },
-            };
-          })
-        );
-      }
-    },
-    [editor]
-  );
-
-  // Änderungshandler für Schriftstil
-  const handleFontStyleChange = useCallback(
-    (fontStyle: string) => {
-      setSelectedFontStyle(fontStyle);
-      // Es gibt keinen direkten Style für Kursiv, wir setzen es über props
-
-      // Aktualisiere den Stil der ausgewählten Texte
-      const selectedShapes = editor.getSelectedShapeIds();
-      if (selectedShapes.length > 0) {
-        editor.updateShapes(
-          selectedShapes.map((id) => {
-            return {
-              id,
-              type: "text",
-              props: {
-                italic: fontStyle === "italic",
-              },
-            };
-          })
-        );
+        const updates = selectedShapes
+          .map((id) => editor.getShape(id))
+          .filter(shape => shape?.type === 'text')
+          .map(shape => ({
+            id: shape!.id,
+            type: 'text' as const,
+            props: { font: fontFamily },
+          }));
+         if (updates.length > 0) {
+           editor.updateShapes(updates);
+         }
       }
     },
     [editor]
@@ -199,20 +164,20 @@ const TextSettingsPopup: React.FC<TextSettingsPopupProps> = ({
       setSelectedFontSize(fontSize);
       editor.setStyleForNextShapes(DefaultSizeStyle, fontSize);
 
-      // Aktualisiere den Stil der ausgewählten Texte
+      // Aktualisiere ausgewählte Text-Shapes
       const selectedShapes = editor.getSelectedShapeIds();
       if (selectedShapes.length > 0) {
-        editor.updateShapes(
-          selectedShapes.map((id) => {
-            return {
-              id,
-              type: "text",
-              props: {
-                size: fontSize,
-              },
-            };
-          })
-        );
+        const updates = selectedShapes
+          .map((id) => editor.getShape(id))
+          .filter(shape => shape?.type === 'text')
+          .map(shape => ({
+            id: shape!.id,
+            type: 'text' as const,
+            props: { size: fontSize },
+          }));
+         if (updates.length > 0) {
+           editor.updateShapes(updates);
+         }
       }
     },
     [editor]
@@ -224,23 +189,33 @@ const TextSettingsPopup: React.FC<TextSettingsPopupProps> = ({
       setSelectedTextAlign(textAlign);
       editor.setStyleForNextShapes(DefaultTextAlignStyle, textAlign);
 
-      // Aktualisiere den Stil der ausgewählten Texte
+      // Aktualisiere ausgewählte Text-Shapes
       const selectedShapes = editor.getSelectedShapeIds();
       if (selectedShapes.length > 0) {
-        editor.updateShapes(
-          selectedShapes.map((id) => {
-            return {
-              id,
-              type: "text",
-              props: {
-                align: textAlign,
-              },
-            };
-          })
-        );
+        const updates = selectedShapes
+          .map((id) => editor.getShape(id))
+          .filter(shape => shape?.type === 'text')
+          .map(shape => ({
+            id: shape!.id,
+            type: 'text' as const,
+            // Setze die 'align' Prop direkt
+            props: { align: textAlign },
+          }));
+         if (updates.length > 0) {
+           editor.updateShapes(updates);
+         }
       }
     },
     [editor]
+  );
+
+  // Änderungshandler für Schriftstil (Kursiv) - auskommentiert
+  const handleFontStyleChange = useCallback(
+    (fontStyle: string) => {
+      setSelectedFontStyle(fontStyle);
+      // Logik zum Aktualisieren von 'italic' fehlt noch
+    },
+    [] // Keine Abhängigkeiten mehr, da Editor nicht verwendet wird
   );
 
   // Wenn nicht sichtbar, nichts rendern

@@ -76,3 +76,11 @@ h6 {
     filter: drop-shadow(0 0 20px rgba(255, 87, 34, 1));
   }
 }
+
+/* Keep selection indicator visible while dragging (Attempt 2) */
+.tl-container[data-is-dragging="true"] .tl-selection__bounds,
+.tl-container[data-is-dragging="true"] .tl-selection__indicator {
+  opacity: 1 !important;
+  display: block !important; /* Ensure it's not set to display: none */
+  visibility: visible !important; /* Ensure it's not set to visibility: hidden */
+}

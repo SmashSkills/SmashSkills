@@ -3,9 +3,10 @@ import { Editor } from "@tldraw/tldraw";
 import PencilSettingsPopup from "./PencilSettingsPopup";
 import ShapeSettingsPopup from "./ShapeSettingsPopup";
 import TextSettingsPopup from "./TextSettingsPopup";
+import LayerSettingsPopup from "./LayerSettingsPopup";
 import { motion, AnimatePresence } from "framer-motion";
 
-export type SettingsType = "draw" | "shape" | "text";
+export type SettingsType = "draw" | "shape" | "text" | "layer";
 
 interface SettingsPopupProps {
   editor: Editor;
@@ -13,7 +14,7 @@ interface SettingsPopupProps {
   className?: string;
   style?: React.CSSProperties;
   initialActiveTab?: SettingsType;
-  type?: SettingsType;
+  type: SettingsType | null;
 }
 
 /**
@@ -46,11 +47,11 @@ const SettingsPopup: React.FC<SettingsPopupProps> = ({
     exit: { opacity: 0, transition: { duration: 0.15 } },
   };
 
-  if (!isVisible) return null;
+  if (!isVisible || !type) return null;
 
   return (
     <motion.div
-      className={`bg-white w-full flex flex-col ${className}`}
+      className={`bg-white w-xs flex flex-col ${className}`}
       style={{
         ...style,
         maxHeight: "100vh",
@@ -96,6 +97,17 @@ const SettingsPopup: React.FC<SettingsPopupProps> = ({
               exit="exit"
             >
               <TextSettingsPopup editor={editor} isVisible={true} />
+            </motion.div>
+          )}
+          {activeTab === "layer" && (
+            <motion.div
+              key="layer"
+              variants={contentVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <LayerSettingsPopup editor={editor} isVisible={true} />
             </motion.div>
           )}
         </AnimatePresence>

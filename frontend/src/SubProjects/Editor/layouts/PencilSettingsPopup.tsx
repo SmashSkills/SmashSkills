@@ -4,6 +4,7 @@ import {
   DefaultColorStyle,
   DefaultSizeStyle,
   DefaultDashStyle,
+  type TLDrawShape,
 } from "@tldraw/tldraw";
 import ButtonSliderHorizontal from "../../../components/ui_elements/buttons/button_slider_horizontal";
 import ButtonSliderVertical from "../../../components/ui_elements/buttons/button_slider_vertical";
@@ -90,41 +91,47 @@ const PencilSettingsPopup: React.FC<PencilSettingsPopupProps> = ({
 
   // Aktualisiert die Einstellungen beim Öffnen und nach Änderungen
   useEffect(() => {
-    if (isVisible) {
+    if (editor && isVisible) {
+      // Lese globale Defaults für den Fall, dass nichts/falsches ausgewählt ist
       const styles = editor.getInstanceState().stylesForNextShape;
-      // Lese immer den *Default* Color Style, da Hex nicht gespeichert wird
-      const styleColorId = (styles[DefaultColorStyle.id] as string) || "black";
-      setCurrentColor(styleColorId); // Setze initial die ID
-      setCurrentSize((styles[DefaultSizeStyle.id] as string) || "m");
-      setCurrentDash((styles[DefaultDashStyle.id] as string) || "draw");
+      const defaultColorId =
+        (styles[DefaultColorStyle.id] as string) || "black";
+      const defaultSizeId = (styles[DefaultSizeStyle.id] as string) || "m";
+      const defaultDashId = (styles[DefaultDashStyle.id] as string) || "draw";
 
-      // Definiere eine Funktion, die bei Editor-Statusänderungen aufgerufen wird
-      const handleStyleChange = () => {
-        const updatedStyles = editor.getInstanceState().stylesForNextShape;
-        // Nur DefaultColorStyle lesen und setzen
-        const updatedColorId =
-          (updatedStyles[DefaultColorStyle.id] as string) || "black";
-        // Nur updaten, wenn sich die ID tatsächlich geändert hat, um Custom-Farbe nicht zu überschreiben
-        if (
-          COLOR_PALETTE.some((c) => c.id === updatedColorId) &&
-          updatedColorId !== currentColor
-        ) {
-          setCurrentColor(updatedColorId);
-        }
-        setCurrentSize((updatedStyles[DefaultSizeStyle.id] as string) || "m");
-        setCurrentDash(
-          (updatedStyles[DefaultDashStyle.id] as string) || "draw"
+      // Prüfe die aktuelle Auswahl
+      const selectedShapes = editor.getSelectedShapes();
+
+      if (selectedShapes.length === 1 && selectedShapes[0].type === "draw") {
+        // Wenn genau eine Draw-Form ausgewählt ist, deren Styles nehmen
+        const drawShape = selectedShapes[0] as TLDrawShape;
+        const props = drawShape.props;
+
+        // Farbe: Setze die ID, wenn es eine vordefinierte ist, sonst den Hex-Wert
+        const selectedColorValue = props.color || defaultColorId;
+        const isPredefined = COLOR_PALETTE.some(
+          (c) => c.id === selectedColorValue
         );
-      };
+        setCurrentColor(
+          isPredefined
+            ? selectedColorValue
+            : getHexFromColorValue(selectedColorValue)
+        );
 
-      // Regelmäßig prüfen (alle 100ms), ob sich die Stile geändert haben
-      const intervalId = setInterval(handleStyleChange, 100);
+        // Größe
+        setCurrentSize(props.size || defaultSizeId);
 
-      return () => {
-        clearInterval(intervalId);
-      };
+        // Strichart: Bleibt an die globalen Defaults gekoppelt, da Draw-Shapes keine 'dash'-Prop haben
+        setCurrentDash(defaultDashId);
+      } else {
+        // Wenn nichts oder mehrere/falsche Shapes ausgewählt sind, globale Defaults verwenden
+        setCurrentColor(defaultColorId);
+        setCurrentSize(defaultSizeId);
+        setCurrentDash(defaultDashId);
+      }
     }
-  }, [editor, isVisible, currentColor]); // currentColor als Abhängigkeit hinzugefügt
+    // Abhängigkeit von ausgewählten IDs hinzufügen, damit der Hook bei Auswahländerung läuft
+  }, [editor, isVisible, editor?.getSelectedShapeIds().join(",")]); // Entferne 'currentColor' hier
 
   // Funktionen zum Ändern der Styles
   const handleColorChange = (colorValue: string) => {
@@ -137,51 +144,51 @@ const PencilSettingsPopup: React.FC<PencilSettingsPopupProps> = ({
     // 1. Aktualisiere ausgewählte Shapes IMMER mit dem finalen Hex-Wert
     const selectedShapes = editor.getSelectedShapes();
     if (selectedShapes.length > 0) {
-      // Wichtig: Props müssen den erwarteten Typen entsprechen, ggf. Typ prüfen
-      const updates = selectedShapes.map((shape) => ({
-        id: shape.id,
-        type: shape.type,
-        props: { ...shape.props, color: finalColorHex }, // color direkt setzen oder anpassen falls nötig
-      }));
-      editor.updateShapes(updates);
+      const updates = selectedShapes
+        .filter((shape) => shape.type === "draw") // Nur Draw-Shapes aktualisieren
+        .map((shape) => ({
+          id: shape.id,
+          type: "draw",
+          props: { color: finalColorHex }, // Hier muss der Prop-Name korrekt sein für Draw
+        }));
+      if (updates.length > 0) {
+        editor.updateShapes(updates);
+      }
     }
 
     // 2. Setze den Stil für nächste Shapes NUR, wenn es eine vordefinierte ID ist
     if (isPredefined) {
       editor.setStyleForNextShapes(DefaultColorStyle, colorValue);
+    } else {
+      // Optional: Was soll passieren, wenn eine Custom Hex Farbe gewählt wird?
+      // Man könnte den Default auf Schwarz zurücksetzen oder den letzten Default behalten.
+      // Aktuell wird der letzte Default behalten.
     }
-    // Wenn es ein Hex-Wert ist, wird der DefaultColorStyle NICHT geändert.
-    // Neue Shapes verwenden weiterhin den zuletzt gesetzten DefaultColorStyle.
   };
 
   const handleSizeChange = (sizeId: string) => {
-    editor.setStyleForNextShapes(DefaultSizeStyle, sizeId);
     setCurrentSize(sizeId);
-    // Optional: Größe ausgewählter Shapes auch anpassen?
+    editor.setStyleForNextShapes(DefaultSizeStyle, sizeId);
+
     const selectedShapes = editor.getSelectedShapes();
     if (selectedShapes.length > 0) {
-      const updates = selectedShapes.map((shape) => ({
-        id: shape.id,
-        type: shape.type,
-        props: { ...shape.props, size: sizeId },
-      }));
-      editor.updateShapes(updates);
+      const updates = selectedShapes
+        .filter((shape) => shape.type === "draw") // Nur Draw-Shapes aktualisieren
+        .map((shape) => ({
+          id: shape.id,
+          type: "draw",
+          props: { size: sizeId }, // Hier muss der Prop-Name korrekt sein für Draw
+        }));
+      if (updates.length > 0) {
+        editor.updateShapes(updates);
+      }
     }
   };
 
   const handleDashChange = (dashId: string) => {
-    editor.setStyleForNextShapes(DefaultDashStyle, dashId);
     setCurrentDash(dashId);
-    // Optional: Strichart ausgewählter Shapes auch anpassen?
-    const selectedShapes = editor.getSelectedShapes();
-    if (selectedShapes.length > 0) {
-      const updates = selectedShapes.map((shape) => ({
-        id: shape.id,
-        type: shape.type,
-        props: { ...shape.props, dash: dashId },
-      }));
-      editor.updateShapes(updates);
-    }
+    editor.setStyleForNextShapes(DefaultDashStyle, dashId);
+    // Keine Aktualisierung ausgewählter Shapes, da 'dash' keine Draw-Prop ist
   };
 
   if (!isVisible) return null;

@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { Editor, TLShapePartial } from "@tldraw/tldraw";
 import {
-  Editor,
-  DefaultColorStyle,
-  DefaultSizeStyle,
-  DefaultFillStyle,
-  DefaultDashStyle,
-} from "@tldraw/tldraw";
-import { CustomGeoShapeType } from "../components/custom-shapes/CustomShapeUtils";
+  CustomGeoShapeType,
+  CustomGeoShape,
+} from "../components/custom-shapes/CustomGeoShapeUtil";
 import ButtonSliderHorizontal from "../../../components/ui_elements/buttons/button_slider_horizontal";
 import ButtonSliderVertical from "../../../components/ui_elements/buttons/button_slider_vertical";
 import ButtonColorPalette from "../../../components/ui_elements/buttons/button_color_palette";
@@ -16,51 +13,36 @@ interface ShapeSettingsPopupProps {
   isVisible: boolean;
 }
 
-// Standard-Geo-Formen (von tldraw unterstützt)
+// Füge die neuen Grundformen hinzu und passe Icons an
 const SHAPE_TYPES = [
   {
     id: "rectangle",
     label: "Rechteck",
     value: "rectangle",
-    tool: "geo",
+    tool: "custom-geo",
     icon: <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>,
   },
   {
     id: "ellipse",
     label: "Ellipse",
     value: "ellipse",
-    tool: "geo",
-    icon: <circle cx="12" cy="12" r="10"></circle>,
+    tool: "custom-geo",
+    icon: <ellipse cx="12" cy="12" rx="9" ry="9"></ellipse>, // <ellipse> statt <circle>
   },
   {
     id: "triangle",
     label: "Dreieck",
     value: "triangle",
-    tool: "geo",
-    icon: <path d="M3 20h18L12 4z"></path>,
+    tool: "custom-geo",
+    icon: <path d="M12 2L22 20H2z"></path>, // Angepasstes Dreieck
   },
   {
     id: "diamond",
     label: "Raute",
     value: "diamond",
-    tool: "geo",
-    icon: <path d="M12 2L2 12l10 10 10-10z"></path>,
+    tool: "custom-geo",
+    icon: <path d="M12 2L22 12L12 22L2 12Z"></path>, // Angepasste Raute
   },
-  {
-    id: "line",
-    label: "Linie",
-    value: "line",
-    tool: "line",
-    icon: <path d="M5 19l14-14"></path>,
-  },
-  {
-    id: "arrow",
-    label: "Pfeil",
-    value: "arrow",
-    tool: "arrow",
-    icon: <path d="M5 12h14M12 5l7 7-7 7"></path>,
-  },
-  // Benutzerdefinierte Shapes
   {
     id: "pentagon",
     label: "Fünfeck",
@@ -160,15 +142,13 @@ const LINE_STYLES = [
   { id: "dotted", label: "Gepunktet", value: "dotted" },
 ];
 
-// Ausrichtungsoptionen
-const ALIGNMENT_OPTIONS = [
-  { id: "start", label: "Links", value: "start" },
-  { id: "middle", label: "Mitte", value: "middle" },
-  { id: "end", label: "Rechts", value: "end" },
-];
-
 // Helfer-Funktion, um tldraw-Farbnamen in CSS-Farben umzuwandeln
 const getTldrawColorValue = (colorName: string): string => {
+  // Prüfe zuerst auf Hex
+  if (/^#[0-9A-F]{6}$/i.test(colorName)) {
+    return colorName;
+  }
+  // Fallback auf tldraw Namen
   switch (colorName) {
     case "black":
       return "#1d1d1d";
@@ -197,7 +177,7 @@ const getTldrawColorValue = (colorName: string): string => {
     case "white":
       return "#ffffff";
     default:
-      return "#1d1d1d"; // Standardfarbe als Fallback
+      return "#1d1d1d";
   }
 };
 
@@ -205,122 +185,70 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
   editor,
   isVisible,
 }) => {
-  // Zustand für Form-Einstellungen
-  const [selectedShapeType, setSelectedShapeType] = useState("rectangle");
-  const [selectedColor, setSelectedColor] = useState("black");
-  const [selectedSize, setSelectedSize] = useState("m"); // Linienstärke
-  const [selectedFormSize, setSelectedFormSize] = useState("medium"); // Formgröße
+  // Standard auf 'rectangle' setzen
+  const [selectedShapeType, setSelectedShapeType] = useState(SHAPE_TYPES[0].id);
+  const [selectedColor, setSelectedColor] = useState("#000000"); // Standard auf Hex Schwarz
+  const [selectedSize, setSelectedSize] = useState("m");
+  const [selectedFormSize, setSelectedFormSize] = useState("medium");
   const [selectedStrokeWidth, setSelectedStrokeWidth] = useState("m");
   const [selectedFillStyle, setSelectedFillStyle] = useState("none");
   const [selectedLineStyle, setSelectedLineStyle] = useState("solid");
-  const [selectedAlignment, setSelectedAlignment] = useState("middle");
 
-  // Lade aktuelle Einstellungen aus dem Editor
+  // Lade aktuelle Einstellungen aus dem Editor oder ausgewählten Shapes
   useEffect(() => {
     if (editor && isVisible) {
-      // Aktuelle Formeinstellungen abrufen
-      const styles = editor.getInstanceState().stylesForNextShape;
-      const currentShapeType = styles["tldraw:geo"] || "rectangle";
-      setSelectedShapeType(currentShapeType as string);
-
-      // Farbe abrufen
-      const currentColor = styles[DefaultColorStyle.id];
-      if (currentColor) {
-        setSelectedColor(currentColor as string);
-      }
-
-      // Größe abrufen
-      const currentSize = styles[DefaultSizeStyle.id];
-      if (currentSize) {
-        setSelectedSize(currentSize as string);
-      }
-
-      // Füllstil abrufen
-      const currentFill = styles[DefaultFillStyle.id];
-      if (currentFill) {
-        setSelectedFillStyle(currentFill as string);
-      }
-
-      // Linienstil abrufen
-      const currentDash = styles[DefaultDashStyle.id];
-      if (currentDash) {
-        setSelectedLineStyle(currentDash as string);
+      const selectedShapes = editor.getSelectedShapes();
+      if (
+        selectedShapes.length === 1 &&
+        selectedShapes[0].type === "custom-geo"
+      ) {
+        const props = selectedShapes[0].props as CustomGeoShape["props"];
+        setSelectedShapeType(props.geo);
+        setSelectedColor(props.color);
+        setSelectedSize(props.size);
+        setSelectedStrokeWidth(props.size);
+        setSelectedFillStyle(props.fill);
+        setSelectedLineStyle(props.dash);
+        const matchedSize = FORM_SIZE_CATEGORIES.find(
+          (cat) => cat.width === props.w && cat.height === props.h
+        );
+        setSelectedFormSize(matchedSize ? matchedSize.id : "medium");
       }
     }
-  }, [editor, isVisible]);
+  }, [editor, isVisible, editor?.getSelectedShapeIds().join(",")]);
 
   // Änderungshandler für Form-Typ
   const handleShapeTypeChange = useCallback(
     (shapeType: string) => {
       setSelectedShapeType(shapeType);
 
-      // Finde den entsprechenden Shape-Typ im Array
       const selectedShape = SHAPE_TYPES.find((shape) => shape.id === shapeType);
-
       if (!selectedShape) return;
 
-      // Finde die ausgewählte Formgröße
       const formSize =
         FORM_SIZE_CATEGORIES.find((size) => size.id === selectedFormSize) ||
-        FORM_SIZE_CATEGORIES[1]; // Default auf medium
+        FORM_SIZE_CATEGORIES[1];
 
-      // Setze Tool basierend auf dem Shape-Typ
-      if (selectedShape.tool === "line" || selectedShape.tool === "arrow") {
-        // Linien und Pfeile werden mit der Maus platziert
-        editor.setCurrentTool(selectedShape.tool);
-      } else if (selectedShape.tool === "geo") {
-        // Standard-Geo-Formen werden direkt in der Mitte platziert
-        const center = editor.getViewportScreenCenter();
+      const center = editor.getViewportScreenCenter();
 
-        editor.createShapes([
-          {
-            type: "geo",
-            x: center.x - formSize.width / 2,
-            y: center.y - formSize.height / 2,
-            props: {
-              geo: selectedShape.value,
-              w: formSize.width,
-              h: formSize.height,
-              color: selectedColor,
-              size: selectedSize,
-              dash: selectedLineStyle,
-              fill: selectedFillStyle,
-            },
+      editor.createShapes([
+        {
+          type: "custom-geo",
+          x: center.x - formSize.width / 2,
+          y: center.y - formSize.height / 2,
+          props: {
+            geo: selectedShape.value as CustomGeoShapeType,
+            w: formSize.width,
+            h: formSize.height,
+            color: selectedColor,
+            size: selectedSize,
+            fill: selectedFillStyle,
+            dash: selectedLineStyle,
           },
-        ]);
+        },
+      ]);
 
-        // Nach der direkten Erstellung wechseln wir zum Auswahlwerkzeug zurück
-        editor.setCurrentTool("select");
-      } else if (selectedShape.tool === "custom-geo") {
-        // Benutzerdefinierte Geo-Formen werden direkt in der Mitte platziert
-        const center = editor.getViewportScreenCenter();
-
-        editor.createShapes([
-          {
-            type: "custom-geo",
-            x: center.x - formSize.width / 2,
-            y: center.y - formSize.height / 2,
-            props: {
-              geo: selectedShape.value as CustomGeoShapeType,
-              w: formSize.width,
-              h: formSize.height,
-              color: selectedColor,
-              size: selectedSize,
-              fill: selectedFillStyle,
-              dash: selectedLineStyle,
-            },
-          },
-        ]);
-
-        // Nach der direkten Erstellung wechseln wir zum Auswahlwerkzeug zurück
-        editor.setCurrentTool("select");
-      }
-
-      // Pre-setze Stile für die nächste Form
-      editor.setStyleForNextShapes(DefaultColorStyle, selectedColor);
-      editor.setStyleForNextShapes(DefaultSizeStyle, selectedSize);
-      editor.setStyleForNextShapes(DefaultFillStyle, selectedFillStyle);
-      editor.setStyleForNextShapes(DefaultDashStyle, selectedLineStyle);
+      editor.setCurrentTool("select");
     },
     [
       editor,
@@ -336,22 +264,29 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
   const handleColorChange = useCallback(
     (color: string) => {
       setSelectedColor(color);
-      editor.setStyleForNextShapes(DefaultColorStyle, color);
 
-      // Aktualisiere den Stil der ausgewählten Formen
       const selectedShapes = editor.getSelectedShapeIds();
       if (selectedShapes.length > 0) {
-        editor.updateShapes(
-          selectedShapes.map((id) => {
-            return {
-              id,
-              type: "geo", // Type ist erforderlich
-              props: {
-                color,
-              },
-            };
+        const updates = selectedShapes
+          .map((id): TLShapePartial<CustomGeoShape> | null => {
+            const shape = editor.getShape(id);
+            if (shape?.type === "custom-geo") {
+              return {
+                id,
+                type: "custom-geo",
+                props: { color },
+              };
+            }
+            return null;
           })
-        );
+          .filter(
+            (update): update is TLShapePartial<CustomGeoShape> =>
+              update !== null
+          );
+
+        if (updates.length > 0) {
+          editor.updateShapes(updates);
+        }
       }
     },
     [editor]
@@ -362,32 +297,35 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
     (sizeId: string) => {
       setSelectedFormSize(sizeId);
 
-      // Aktualisiere die Größe der ausgewählten Formen
       const selectedShapes = editor.getSelectedShapeIds();
       if (selectedShapes.length > 0) {
         const formSize =
           FORM_SIZE_CATEGORIES.find((size) => size.id === sizeId) ||
-          FORM_SIZE_CATEGORIES[1]; // Default auf medium
+          FORM_SIZE_CATEGORIES[1];
 
-        editor.updateShapes(
-          selectedShapes.map((id) => {
+        const updates = selectedShapes
+          .map((id): TLShapePartial<CustomGeoShape> | null => {
             const shape = editor.getShape(id);
-            if (!shape) return { id, type: "geo" }; // Stelle sicher, dass type eine Zeichenfolge ist
-
-            // Nur für Formen, die w und h haben
-            if (shape.type === "geo" || shape.type === "custom-geo") {
+            if (shape?.type === "custom-geo") {
               return {
                 id,
-                type: shape.type,
+                type: "custom-geo",
                 props: {
                   w: formSize.width,
                   h: formSize.height,
                 },
               };
             }
-            return { id, type: shape.type }; // Stelle sicher, dass type eine Zeichenfolge ist
+            return null;
           })
-        );
+          .filter(
+            (update): update is TLShapePartial<CustomGeoShape> =>
+              update !== null
+          );
+
+        if (updates.length > 0) {
+          editor.updateShapes(updates);
+        }
       }
     },
     [editor]
@@ -397,26 +335,29 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
   const handleStrokeWidthChange = useCallback(
     (width: string) => {
       setSelectedStrokeWidth(width);
-      // Lege die Konturstärke für die nächste Form fest
-      editor.setStyleForNextShapes(DefaultSizeStyle, width);
+      setSelectedSize(width);
 
-      // Aktualisiere den Stil der ausgewählten Formen
       const selectedShapes = editor.getSelectedShapeIds();
       if (selectedShapes.length > 0) {
-        editor.updateShapes(
-          selectedShapes.map((id) => {
+        const updates = selectedShapes
+          .map((id): TLShapePartial<CustomGeoShape> | null => {
             const shape = editor.getShape(id);
-            if (!shape) return { id, type: "geo" }; // Stelle sicher, dass type eine Zeichenfolge ist
-
-            return {
-              id,
-              type: shape.type,
-              props: {
-                size: width,
-              },
-            };
+            if (shape?.type === "custom-geo") {
+              return {
+                id,
+                type: "custom-geo",
+                props: { size: width },
+              };
+            }
+            return null;
           })
-        );
+          .filter(
+            (update): update is TLShapePartial<CustomGeoShape> =>
+              update !== null
+          );
+        if (updates.length > 0) {
+          editor.updateShapes(updates);
+        }
       }
     },
     [editor]
@@ -426,22 +367,29 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
   const handleFillStyleChange = useCallback(
     (style: string) => {
       setSelectedFillStyle(style);
-      editor.setStyleForNextShapes(DefaultFillStyle, style);
 
-      // Aktualisiere den Stil der ausgewählten Formen
       const selectedShapes = editor.getSelectedShapeIds();
       if (selectedShapes.length > 0) {
-        editor.updateShapes(
-          selectedShapes.map((id) => {
-            return {
-              id,
-              type: "geo", // Type ist erforderlich
-              props: {
-                fill: style,
-              },
-            };
+        const updates = selectedShapes
+          .map((id): TLShapePartial<CustomGeoShape> | null => {
+            const shape = editor.getShape(id);
+            if (shape?.type === "custom-geo") {
+              return {
+                id,
+                type: "custom-geo",
+                props: { fill: style },
+              };
+            }
+            return null;
           })
-        );
+          .filter(
+            (update): update is TLShapePartial<CustomGeoShape> =>
+              update !== null
+          );
+
+        if (updates.length > 0) {
+          editor.updateShapes(updates);
+        }
       }
     },
     [editor]
@@ -451,56 +399,36 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
   const handleLineStyleChange = useCallback(
     (style: string) => {
       setSelectedLineStyle(style);
-      // Lege den Linienstil für die nächste Form fest
-      editor.setStyleForNextShapes(DefaultDashStyle, style);
 
-      // Aktualisiere den Stil der ausgewählten Formen
       const selectedShapes = editor.getSelectedShapeIds();
       if (selectedShapes.length > 0) {
-        editor.updateShapes(
-          selectedShapes.map((id) => {
-            return {
-              id,
-              type: "geo", // Type ist erforderlich
-              props: {
-                dash: style,
-              },
-            };
+        const updates = selectedShapes
+          .map((id): TLShapePartial<CustomGeoShape> | null => {
+            const shape = editor.getShape(id);
+            if (shape?.type === "custom-geo") {
+              return {
+                id,
+                type: "custom-geo",
+                props: { dash: style },
+              };
+            }
+            return null;
           })
-        );
+          .filter(
+            (update): update is TLShapePartial<CustomGeoShape> =>
+              update !== null
+          );
+
+        if (updates.length > 0) {
+          editor.updateShapes(updates);
+        }
       }
     },
     [editor]
   );
 
-  // Änderungshandler für Ausrichtung
-  const handleAlignmentChange = useCallback(
-    (alignment: string) => {
-      setSelectedAlignment(alignment);
-
-      // Aktualisiere den Stil der ausgewählten Formen
-      const selectedShapes = editor.getSelectedShapeIds();
-      if (selectedShapes.length > 0) {
-        editor.updateShapes(
-          selectedShapes.map((id) => {
-            return {
-              id,
-              type: "geo", // Type ist erforderlich
-              props: {
-                align: alignment,
-              },
-            };
-          })
-        );
-      }
-    },
-    [editor]
-  );
-
-  // Wenn nicht sichtbar, nichts rendern
   if (!isVisible) return null;
 
-  // Konvertiere COLOR_PALETTE für ButtonColorPalette-Komponente
   const colorPaletteOptions = COLOR_PALETTE.map((color) => ({
     id: color.id,
     label: color.label,
@@ -508,14 +436,12 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
     hex: getTldrawColorValue(color.value),
   }));
 
-  // Konvertiere STROKE_WIDTHS für ButtonSliderHorizontal-Komponente
   const strokeWidthOptions = STROKE_WIDTHS.map((width) => ({
     id: width.id,
     label: width.label,
     value: width.value,
   }));
 
-  // Konvertiere FILL_STYLES für ButtonSliderHorizontal-Komponente
   const fillStyleOptions = FILL_STYLES.map((style) => ({
     id: style.id,
     label: style.label,
@@ -523,7 +449,6 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
     icon: null,
   }));
 
-  // Konvertiere LINE_STYLES für ButtonSliderHorizontal-Komponente
   const lineStyleOptions = LINE_STYLES.map((style) => ({
     id: style.id,
     label: style.label,
@@ -531,7 +456,6 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
     icon: null,
   }));
 
-  // Konvertiere FORM_SIZE_CATEGORIES für ButtonSliderHorizontal-Komponente
   const formSizeOptions = FORM_SIZE_CATEGORIES.map((size) => ({
     id: size.id,
     label: size.label,
@@ -557,8 +481,6 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
           <div className="text-xs text-gray-500 font-medium mb-2">
             Formtyp auswählen
           </div>
-
-          {/* ButtonSliderVertical anstelle von Grid mit Buttons */}
           <ButtonSliderVertical
             options={SHAPE_TYPES.map((shape) => ({
               id: shape.id,
@@ -569,7 +491,7 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
             selectedValue={selectedShapeType}
             onValueChange={handleShapeTypeChange}
             columns={3}
-            rows={4}
+            rows={Math.ceil(SHAPE_TYPES.length / 3)}
             iconSize={20}
             showLabels={true}
             iconPosition="top"
@@ -596,8 +518,10 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              {SHAPE_TYPES.find((shape) => shape.id === selectedShapeType)
-                ?.icon || SHAPE_TYPES[0].icon}
+              {
+                SHAPE_TYPES.find((shape) => shape.id === selectedShapeType)
+                  ?.icon
+              }
             </svg>
           </div>
           <div className="flex flex-col">
@@ -605,8 +529,10 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
               Aktuelle Form
             </span>
             <span className="text-xs text-gray-500">
-              {SHAPE_TYPES.find((shape) => shape.id === selectedShapeType)
-                ?.label || "Rechteck"}
+              {
+                SHAPE_TYPES.find((shape) => shape.id === selectedShapeType)
+                  ?.label
+              }
             </span>
           </div>
         </div>
@@ -673,30 +599,6 @@ const ShapeSettingsPopup: React.FC<ShapeSettingsPopupProps> = ({
           />
         </div>
       </div>
-
-      {/* Ausrichtung - nur anzeigen wenn Text ausgewählt ist */}
-      {selectedShapeType === "text" && (
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-500 font-medium">
-            Ausrichtung
-          </label>
-          <div className="grid grid-cols-3 gap-1">
-            {ALIGNMENT_OPTIONS.map((alignment) => (
-              <button
-                key={alignment.id}
-                className={`py-1 px-2 text-center text-xs rounded border ${
-                  selectedAlignment === alignment.value
-                    ? "bg-orange-100 text-[#ff5722] border-orange-300"
-                    : "bg-gray-50 border-gray-300 hover:bg-gray-100"
-                }`}
-                onClick={() => handleAlignmentChange(alignment.value)}
-              >
-                {alignment.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

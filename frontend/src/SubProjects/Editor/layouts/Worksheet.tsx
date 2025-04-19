@@ -1,5 +1,4 @@
 //MAIN DATA
-
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   Tldraw,
@@ -12,6 +11,8 @@ import "@tldraw/tldraw/tldraw.css";
 import CustomToolbar from "./CustomToolbar";
 import SettingsPopup, { SettingsType } from "./SettingsPopup";
 import { customShapeUtils } from "../components/custom-shapes/CustomShapeUtils";
+import { UserImportedImageUtil } from "../components/custom-shapes/UserImportedShapeutil";
+import { LayerDividerShapeUtil } from "../components/custom-shapes/LayerDividerShapeUtil";
 import {
   createGuidelinesManager,
   GuidelinesManager,
@@ -21,6 +22,8 @@ import {
   createSheetGuideManager,
   SheetGuideManager,
 } from "../utils/GuidesSheetUtil";
+// Framer Motion importieren
+import { motion, AnimatePresence } from "framer-motion";
 
 interface WorksheetProps {
   width?: number;
@@ -66,10 +69,7 @@ const DIN_A4_HEIGHT = 1123; // ~ 297mm
 const Worksheet: React.FC<WorksheetProps> = ({ children }) => {
   const [editor, setEditor] = useState<Editor | null>(null);
   const [currentTool, setCurrentTool] = useState<string | null>(null);
-  const [showSettingsSidebar, setShowSettingsSidebar] = useState<boolean>(true);
-  const [activeSettingsTab, setActiveSettingsTab] = useState<SettingsType>(
-    "draw"
-  );
+  const [activeSidebar, setActiveSidebar] = useState<SettingsType | null>(null);
   const editorRef = useRef<Editor | null>(null);
   const [snappingEnabled, setSnappingEnabled] = useState<boolean>(true);
 
@@ -120,14 +120,11 @@ const Worksheet: React.FC<WorksheetProps> = ({ children }) => {
 
       // Abonniere das onTranslateShape-Event für Snapping
       newEditor.store.listen(() => {
-        // Statt auf spezifische Eigenschaften zuzugreifen, die TypeScript-Fehler verursachen,
-        // verwenden wir eine einfachere Bedingung: Wenn Shapes ausgewählt sind und Snapping aktiviert ist
         if (
           snappingEnabled &&
           sheetGuideManagerRef.current &&
           newEditor.getSelectedShapeIds().length > 0
         ) {
-          // Aktualisiere die Hilfslinien, wenn Shapes bewegt werden
           const selectedIds = newEditor.getSelectedShapeIds();
 
           for (const id of selectedIds) {
@@ -138,10 +135,8 @@ const Worksheet: React.FC<WorksheetProps> = ({ children }) => {
                 sheetGuideManagerRef.current.getSettings().enabled &&
                 guidelinesManagerRef.current
               ) {
-                // Hilfslinien ausblenden
                 guidelinesManagerRef.current.clearGuidelines();
               } else if (guidelinesManagerRef.current) {
-                // Ansonsten: Reguläre Hilfslinien aktualisieren
                 guidelinesManagerRef.current.updateGuidelines(
                   bounds,
                   id as TLShapeId
@@ -158,7 +153,6 @@ const Worksheet: React.FC<WorksheetProps> = ({ children }) => {
                 const shape = newEditor.getShape(id);
                 if (shape) {
                   try {
-                    // Wende den Offset in einer Editor-Transaktion an
                     newEditor.updateShapes([
                       {
                         id,
@@ -180,8 +174,6 @@ const Worksheet: React.FC<WorksheetProps> = ({ children }) => {
         }
       });
 
-      // Wir verwenden einen anderen Ansatz zum Tracking der Bewegungen
-      // Statt TLDraw-Events verwenden wir Pointer-Events am Canvas
       const canvas = document.querySelector(".tl-canvas");
       if (canvas) {
         canvas.addEventListener("pointermove", () => {
@@ -209,7 +201,6 @@ const Worksheet: React.FC<WorksheetProps> = ({ children }) => {
     }) => {
       if (!editor || !guidelinesManagerRef.current) return;
 
-      // Nur fortfahren, wenn Shapes ausgewählt sind und bewegt werden
       if (editor.getSelectedShapeIds().length === 0) return;
       if (info.target !== "shape" && info.target !== "selection") return;
 
@@ -256,130 +247,111 @@ const Worksheet: React.FC<WorksheetProps> = ({ children }) => {
   // Überwache das aktuelle Werkzeug und zeige die entsprechenden Einstellungen
   useEffect(() => {
     if (editor) {
-      // Aktuelle Werkzeug-ID abrufen
-      const toolId = editor.getCurrentToolId();
+      const updateSidebarBasedOnTool = () => {
+        const toolId = editor.getCurrentToolId();
 
-      // Nur aktualisieren, wenn sich das Werkzeug geändert hat
-      if (toolId !== currentTool) {
-        setCurrentTool(toolId);
-
-        // Automatisch das entsprechende Settings-Panel basierend auf dem Werkzeug anzeigen
-        if (toolId === "draw") {
-          setActiveSettingsTab("draw");
-          setShowSettingsSidebar(true);
-        } else if (
-          toolId === "geo" ||
-          toolId === "line" ||
-          toolId === "arrow"
-        ) {
-          setActiveSettingsTab("shape");
-          setShowSettingsSidebar(true);
-        } else if (toolId === "text") {
-          setActiveSettingsTab("text");
-          setShowSettingsSidebar(true);
-        } else if (toolId === "select" || toolId === "eraser") {
-          // Seitenleiste nicht verstecken, nur den aktiven Tab ändern
-          // setShowSettingsSidebar(false);
-        }
-      }
-
-      // Regelmäßig prüfen, ob sich das aktuelle Werkzeug geändert hat
-      const intervalId = setInterval(() => {
-        const newToolId = editor.getCurrentToolId();
-        if (newToolId !== currentTool) {
-          setCurrentTool(newToolId);
-        }
-      }, 100);
-
-      return () => {
-        clearInterval(intervalId);
-      };
-    }
-  }, [editor, currentTool]);
-
-  // Überwache die Auswahl und öffne die entsprechenden Einstellungen
-  useEffect(() => {
-    if (editor) {
-      // Speichere die letzte bekannte Auswahl
-      let lastSelectedIds: string[] = [];
-
-      // Erstelle eine Funktion, die bei Änderungen der Auswahl aufgerufen wird
-      const checkSelectionChange = () => {
-        // Wenn das Werkzeug nicht "select" ist, reagiere nicht auf Auswahländerungen
-        if (editor.getCurrentToolId() !== "select") return;
-
-        const selectedIds = editor.getSelectedShapeIds();
-
-        // Prüfe, ob sich die Auswahl geändert hat
-        if (
-          selectedIds.length !== lastSelectedIds.length ||
-          selectedIds.some((id, i) => lastSelectedIds[i] !== id)
-        ) {
-          // Aktualisiere die letzte bekannte Auswahl
-          lastSelectedIds = [...selectedIds];
-
-          // Wenn keine Shapes ausgewählt sind, nichts tun
-          if (selectedIds.length === 0) return;
-
-          // Hole die ausgewählten Shapes
-          const selectedShapes = editor.getSelectedShapes();
-          if (selectedShapes.length === 0) return;
-
-          // Prüfe den Typ des ersten ausgewählten Elements
-          const firstSelectedShape = selectedShapes[0];
-
-          if (firstSelectedShape.type === "text") {
-            // Wenn ein Text ausgewählt ist, öffne die Text-Einstellungen
-            setActiveSettingsTab("text");
-            setShowSettingsSidebar(true);
-          } else if (
-            firstSelectedShape.type === "geo" ||
-            firstSelectedShape.type === "line" ||
-            firstSelectedShape.type === "arrow" ||
-            firstSelectedShape.type === "custom-geo"
-          ) {
-            // Wenn eine Form ausgewählt ist, öffne die Form-Einstellungen
-            setActiveSettingsTab("shape");
-            setShowSettingsSidebar(true);
-          } else if (firstSelectedShape.type === "draw") {
-            // Wenn eine Zeichnung ausgewählt ist, öffne die Stift-Einstellungen
-            setActiveSettingsTab("draw");
-            setShowSettingsSidebar(true);
+        // Nur aktualisieren, wenn sich das Werkzeug geändert hat UND die Layer-Sidebar nicht aktiv ist
+        if (toolId !== currentTool && activeSidebar !== "layer") {
+          setCurrentTool(toolId);
+          if (toolId === "draw") {
+            setActiveSidebar("draw");
+          } else if (toolId === "custom-geo") {
+            // Nur noch custom-geo
+            setActiveSidebar("shape");
+          } else if (toolId === "text") {
+            setActiveSidebar("text");
+          } else if (toolId === "select" || toolId === "eraser") {
+            // Verstecke die Sidebar nicht mehr automatisch bei Select/Eraser
+            // setActiveSidebar(null);
           }
         }
       };
 
-      // Regelmäßig prüfen, ob sich die Auswahl geändert hat (alle 100ms)
-      const intervalId = setInterval(checkSelectionChange, 100);
+      // Sofort ausführen und dann intervallbasiert
+      updateSidebarBasedOnTool();
+      const intervalId = setInterval(updateSidebarBasedOnTool, 100);
 
-      // Cleanup beim Unmount
-      return () => {
-        clearInterval(intervalId);
-      };
+      return () => clearInterval(intervalId);
     }
-  }, [editor]);
+  }, [editor, currentTool, activeSidebar]);
+
+  // Überwache die Auswahl und öffne die entsprechenden Einstellungen
+  useEffect(() => {
+    if (editor) {
+      let lastSelectedIds: string[] = [];
+      const checkSelectionChange = () => {
+        // Nur reagieren, wenn Select-Tool aktiv ist und Layer-Sidebar nicht offen ist
+        if (editor.getCurrentToolId() !== "select" || activeSidebar === "layer")
+          return;
+
+        const selectedIds = editor.getSelectedShapeIds();
+        if (
+          selectedIds.length !== lastSelectedIds.length ||
+          selectedIds.some((id, i) => lastSelectedIds[i] !== id)
+        ) {
+          lastSelectedIds = [...selectedIds];
+          if (selectedIds.length === 0) return;
+
+          const firstSelectedShape = editor.getShape(selectedIds[0]);
+          if (!firstSelectedShape) return;
+
+          if (editor.isShapeOfType(firstSelectedShape, "text")) {
+            setActiveSidebar("text");
+          } else if (editor.isShapeOfType(firstSelectedShape, "custom-geo")) {
+            setActiveSidebar("shape");
+          } else if (editor.isShapeOfType(firstSelectedShape, "draw")) {
+            setActiveSidebar("draw");
+          } else {
+            // Bei anderen Typen (z.B. user-image) keine Sidebar automatisch öffnen
+            // setActiveSidebar(null);
+          }
+        }
+      };
+
+      const intervalId = setInterval(checkSelectionChange, 100);
+      return () => clearInterval(intervalId);
+    }
+  }, [editor, activeSidebar]);
 
   // Toggle-Funktionen für die Einstellungen
   const toggleDrawSettings = useCallback(() => {
-    setActiveSettingsTab("draw");
-    setShowSettingsSidebar(true);
+    setActiveSidebar((prev) => (prev === "draw" ? null : "draw"));
   }, []);
 
   const toggleShapeSettings = useCallback(() => {
-    setActiveSettingsTab("shape");
-    setShowSettingsSidebar(true);
-  }, []);
+    setActiveSidebar((prev) => {
+      const isOpening = prev !== "shape";
+      if (isOpening && editor) {
+        // Wenn geöffnet wird, zum Auswahlwerkzeug wechseln
+        editor.setCurrentTool("select");
+      }
+      // Den Sidebar-Status umschalten
+      return isOpening ? "shape" : null;
+    });
+  }, [editor]);
 
   const toggleTextSettings = useCallback(() => {
-    setActiveSettingsTab("text");
-    setShowSettingsSidebar(true);
+    setActiveSidebar((prev) => (prev === "text" ? null : "text"));
   }, []);
+
+  // Toggle-Funktion für Layer-Sidebar
+  const toggleLayerSettings = useCallback(() => {
+    setActiveSidebar((prev) => {
+      const isOpening = prev !== "layer";
+      if (isOpening && editor) {
+        editor.setCurrentTool("select");
+      }
+      return isOpening ? "layer" : null;
+    });
+  }, [editor]);
 
   // Toggle-Funktion für Snapping
   const toggleSnapping = useCallback(() => {
     if (editor && snappingManagerRef.current) {
       snappingManagerRef.current.toggleSnapping();
       setSnappingEnabled(!snappingEnabled);
+      // Aktualisiere die tldraw-interne Einstellung
+      editor.user.updateUserPreferences({ isSnapMode: !snappingEnabled });
     }
   }, [snappingEnabled, editor]);
 
@@ -407,7 +379,32 @@ const Worksheet: React.FC<WorksheetProps> = ({ children }) => {
     return <></>;
   };
 
-  // Toggle für die Settings-Sidebar
+  // --- Animationsvarianten für die Sidebar selbst (nur noch Opacity) ---
+  const sidebarVisualVariants = {
+    hidden: {
+      opacity: 0,
+      transition: { duration: 0.2 }, // Kürzere Opacity-Transition
+    },
+    visible: {
+      opacity: 1,
+      transition: { duration: 0.2, delay: 0.1 }, // Kleine Verzögerung für Opacity
+    },
+  };
+  // --- Ende Animationsvarianten Sidebar ---
+
+  // --- Animationsvarianten für den Worksheet-Container (Padding) ---
+  const worksheetAreaVariants = {
+    noSidebar: {
+      paddingRight: "0rem",
+      transition: { duration: 0.3, ease: "easeInOut" },
+    },
+    withSidebar: {
+      paddingRight: "20rem", // Breite der Sidebar (w-xs = 20rem)
+      transition: { duration: 0.3, ease: "easeInOut" },
+    },
+  };
+  // --- Ende Animationsvarianten Worksheet ---
+
   return (
     <div className="flex flex-col items-center w-full h-full">
       <div className="w-full flex flex-row items-start gap-4 sticky top-0 z-10 bg-white p-1 border-b border-gray-200">
@@ -422,23 +419,28 @@ const Worksheet: React.FC<WorksheetProps> = ({ children }) => {
               toggleSnapping={toggleSnapping}
               snappingEnabled={snappingEnabled}
               sheetGuideManager={sheetGuideManagerRef.current}
+              toggleLayerSettings={toggleLayerSettings}
+              activeSidebar={activeSidebar}
             />
           )}
         </div>
       </div>
 
       {/* Hauptbereich mit Worksheet und Sidebar */}
-      <div className="flex w-full flex-1 overflow-auto">
-        {/* Container für Worksheet */}
-        <div className="flex-grow overflow-auto py-10 flex justify-center">
+      {/* Position relative benötigt, damit absolute Sidebar sich daran orientiert */}
+      <div className="flex w-full flex-1 overflow-auto relative">
+        {/* Container für Worksheet - jetzt animiert */}
+        <motion.div
+          className="flex-grow overflow-auto py-10 flex justify-center"
+          variants={worksheetAreaVariants}
+          animate={activeSidebar !== null ? "withSidebar" : "noSidebar"}
+          initial={false} // Verhindert initiale Animation des Paddings
+        >
           {/* DIN A4 Container */}
           <div
             ref={worksheetContainerRef}
             className="worksheet-container bg-white shadow-lg overflow-hidden relative flex-shrink-0 border border-gray-200"
-            style={{
-              width: DIN_A4_WIDTH,
-              height: DIN_A4_HEIGHT,
-            }}
+            style={{ width: DIN_A4_WIDTH, height: DIN_A4_HEIGHT }}
             onWheel={handleWheel}
           >
             {/* Tldraw nimmt den gesamten Container ein */}
@@ -448,7 +450,11 @@ const Worksheet: React.FC<WorksheetProps> = ({ children }) => {
                 cameraOptions={cameraOptions}
                 persistenceKey="worksheet-persistent-storage"
                 onMount={handleMount}
-                shapeUtils={customShapeUtils}
+                shapeUtils={[
+                  ...customShapeUtils,
+                  UserImportedImageUtil,
+                  LayerDividerShapeUtil,
+                ]}
               >
                 {children}
               </Tldraw>
@@ -464,27 +470,40 @@ const Worksheet: React.FC<WorksheetProps> = ({ children }) => {
             {/* Sheet-Hilfslinien über TLDraw rendern */}
             {editor && sheetGuideManagerRef.current && (
               <div className="absolute inset-0 pointer-events-none z-40">
-                {(() => {
+                {((): React.ReactElement | null => {
                   const SheetGuidelines = sheetGuideManagerRef.current!
                     .SheetGuidelines;
-                  return <SheetGuidelines />;
+                  return SheetGuidelines ? <SheetGuidelines /> : null;
                 })()}
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
 
-        {/* Einstellungen Sidebar */}
-        {editor && showSettingsSidebar && (
-          <div className="relative flex-shrink-0 bg-white h-full">
-            <SettingsPopup
-              editor={editor}
-              isVisible={true}
-              type={activeSettingsTab}
-              className="settings-sidebar top-[70px] self-start z-50"
-            />
-          </div>
-        )}
+        {/* Einstellungen Sidebar mit Animation (Position angepasst) */}
+        <AnimatePresence>
+          {editor && activeSidebar !== null && (
+            <motion.div
+              // Absolute Positionierung rechts, Höhe 100%
+              className="absolute top-0 right-0 h-full bg-white shadow-lg z-20"
+              // Feste Breite hier setzen!
+              style={{ width: "20rem" }} // Entspricht w-xs
+              variants={sidebarVisualVariants} // Nur Opacity-Animation
+              initial="hidden"
+              animate="visible"
+              exit="hidden"
+              key="settings-sidebar-wrapper"
+            >
+              <SettingsPopup
+                editor={editor}
+                isVisible={true} // Immer true, da AnimatePresence steuert
+                type={activeSidebar}
+                // Nimmt jetzt volle Breite des motion.div ein
+                className="settings-sidebar w-full h-full self-start"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
